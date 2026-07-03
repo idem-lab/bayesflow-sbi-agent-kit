@@ -80,6 +80,31 @@ published Bayesian-workflow literature (Gelman et al. 2020; Schad, Betancourt &
 Vasishth 2021; the Amortized Bayesian Workflow, 2024) — see the skill's References
 section.
 
+## Records the agent keeps for you
+
+The agent does not just work in the chat window — it maintains **plain-language
+record documents in your project**, so the reasoning behind every choice is written
+down, survives across sessions (and context resets), and is yours to read, edit, and
+keep. These records are how the kit enforces *human owns the science*: nothing
+scientific changes without your sign-off, and there is always an audit trail proving
+it. They also double as ready-made methods documentation for a paper or report.
+
+- **[`sbi-workflow-status.md`](templates/user-repo/sbi-workflow-status.md)** — a
+  living status ledger: where you are in the workflow, a **decisions log** recording
+  every scientific decision you approved (priors, and any model or simulator change),
+  and an **iteration log** noting every time a failed check sent the workflow back a
+  step. If you ever feel lost in the loop, this is the file to read.
+- **[`prior-specification.md`](templates/user-repo/prior-specification.md)** — the
+  full record of your priors: each parameter, the distribution chosen, the **evidence
+  or citation** behind an informative prior, the **quantitative summary-statistic
+  targets** you committed to (which the prior predictive check then tests), and
+  confirmation that the units and assumptions behind each fitted prior were checked
+  with you.
+
+Both are provided as templates in
+[`templates/user-repo/`](templates/user-repo/); the agent creates and updates them
+in your repository as the workflow proceeds.
+
 ## Intended downstream use
 
 A user may add this repository to their own project, for example as a git submodule:
