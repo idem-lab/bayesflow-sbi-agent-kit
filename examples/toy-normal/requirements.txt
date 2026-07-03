@@ -1,0 +1,23 @@
+# Dependencies for the toy Normal example.
+#
+# BayesFlow 2 runs on Keras 3, which needs ONE deep-learning backend. Install
+# into an isolated environment on Python 3.11 or 3.12 (as of writing, backends
+# do not yet ship wheels for 3.14). Select the backend with the KERAS_BACKEND
+# environment variable, e.g.:
+#
+#     python -m venv .venv && source .venv/bin/activate
+#     pip install -r requirements.txt
+#     KERAS_BACKEND=jax python examples/toy-normal/train.py --smoke
+#
+# The simulator, diagnostics, and tests need only NumPy and run on any Python.
+
+bayesflow>=2.0
+
+# Pick exactly ONE backend (uncomment one):
+jax
+# tensorflow
+# torch
+
+numpy>=1.24
+scipy>=1.10        # diagnostics.py: validated probability densities
+matplotlib>=3.7   # optional, for diagnostic plots

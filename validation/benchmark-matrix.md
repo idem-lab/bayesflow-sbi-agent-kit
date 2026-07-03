@@ -9,21 +9,24 @@ core workflow are proven end-to-end. Do not add them without maintainer approval
 
 ## Active benchmark
 
-### Toy reference model
+### Toy reference model — Normal(mu, sigma), variable N
+
+Implemented in `examples/toy-normal/` (infer mean & sd of a Normal from 5-20
+i.i.d. observations; DeepSet summary over the exchangeable set).
 
 Purpose:
 
 - Fast CI smoke test
-- Known or easily checked behaviour
+- Known or easily checked behaviour (backend-free grid reference posterior)
 - Validates basic workflow structure
 
 Required checks:
 
-- [ ] Prior predictive simulation
-- [ ] Training smoke test
-- [ ] Posterior sampling smoke test
-- [ ] Parameter recovery structure
-- [ ] Posterior predictive report
+- [x] Prior predictive simulation — `simulator.py`, verified (3 NumPy tests pass)
+- [ ] Training smoke test — `train.py --smoke` (needs backend; not yet run)
+- [ ] Posterior sampling smoke test — `train.py` (needs backend; not yet run)
+- [x] Parameter recovery structure — grid reference + helpers in `diagnostics.py` (scipy densities; 4 tests, run where scipy is installed)
+- [ ] Posterior predictive report — structure present; pending a trained model
 
 ## Planned benchmarks (deferred)
 
@@ -38,7 +41,7 @@ Kept as a roadmap only — not yet in scope.
 
 | Benchmark | Status | Owner | Last checked | Notes |
 |---|---|---:|---:|---|
-| Toy reference model | Not started | TBD | TBD | Fast CI target; the only active benchmark |
+| Toy reference model | In progress | TBD | TBD | Simulator verified (3 tests); diagnostics use scipy (4 tests); training pending a backend |
 | Infectious disease time series | Deferred | TBD | — | Planned; first realistic example |
 | Spatial disease transmission | Deferred | TBD | — | Planned; requires human validation |
 | Evolutionary process | Deferred | TBD | — | Planned; requires human validation |
