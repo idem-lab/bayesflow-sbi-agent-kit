@@ -1,0 +1,25 @@
+# Editor backups & swap files
+*~
+*.swp
+*.swo
+.#*
+\#*#
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.ipynb_checkpoints/
+
+# Test / build artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
