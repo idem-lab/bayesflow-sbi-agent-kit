@@ -1,9 +1,13 @@
-
 # Benchmark Matrix
 
-Use this file to track example models and validation coverage.
+Tracks example models and their validation coverage.
 
-## Benchmark categories
+Early-stage scope: only the **toy reference model** is active. The realistic
+models below are planned and intentionally deferred until the toy model and the
+core workflow are proven end-to-end. Do not add them without maintainer approval
+(see root `AGENTS.md` — adding a scientific example requires human sign-off).
+
+## Active benchmark
 
 ### Toy reference model
 
@@ -21,88 +25,21 @@ Required checks:
 - [ ] Parameter recovery structure
 - [ ] Posterior predictive report
 
----
+## Planned benchmarks (deferred)
 
-### Infectious disease time-series model
+Kept as a roadmap only — not yet in scope.
 
-Purpose:
+- **Infectious disease time-series** — partially observed temporal dynamics, observation error, identifiability.
+- **Spatial disease transmission** — spatial outputs, aggregation, local transmission structure.
+- **Evolutionary process** — non-epidemic mechanistic simulation (tree / sequence / allele-frequency outputs).
+- **Spatio-temporal invasion** — high-dimensional spatio-temporal outputs, propagating-front diagnostics, profiling.
 
-- Tests partially observed temporal dynamics
-- Tests observation error
-- Tests identifiability issues
-
-Required checks:
-
-- [ ] Prior predictive checks
-- [ ] Time-series summary/embedding design
-- [ ] Parameter recovery
-- [ ] Simulation-based calibration
-- [ ] Posterior predictive checks
-- [ ] Human validation of model interpretation
-
----
-
-### Spatial disease transmission model
-
-Purpose:
-
-- Tests spatial outputs
-- Tests spatial aggregation
-- Tests local transmission structure
-
-Required checks:
-
-- [ ] Spatial output adapter
-- [ ] Prior predictive spatial maps
-- [ ] Parameter recovery
-- [ ] Posterior predictive spatial diagnostics
-- [ ] Human validation of spatial interpretation
-
----
-
-### Evolutionary process model
-
-Purpose:
-
-- Tests non-epidemic mechanistic simulation
-- Tests tree, sequence, allele-frequency, or summary-statistic outputs
-
-Required checks:
-
-- [ ] Simulator interface audit
-- [ ] Domain-approved priors
-- [ ] Prior predictive checks
-- [ ] Parameter recovery
-- [ ] Calibration diagnostics
-- [ ] Human validation of interpretation
-
----
-
-### Spatio-temporal invasion model
-
-Purpose:
-
-- Tests high-dimensional spatio-temporal outputs
-- Tests propagating-front diagnostics
-- Tests computational experiment design
-
-Required checks:
-
-- [ ] Spatio-temporal adapter
-- [ ] Summary-network comparison
-- [ ] Prior predictive checks
-- [ ] Parameter recovery
-- [ ] Simulation-based calibration
-- [ ] Posterior predictive checks
-- [ ] Runtime and memory profiling
-
-## Benchmark status table
+## Status table
 
 | Benchmark | Status | Owner | Last checked | Notes |
 |---|---|---:|---:|---|
-| Toy reference model | Not started | TBD | TBD | Fast CI target |
-| Infectious disease time series | Not started | TBD | TBD | First realistic example |
-| Spatial disease transmission | Not started | TBD | TBD | Requires human validation |
-| Evolutionary process | Not started | TBD | TBD | Requires human validation |
-| Spatio-temporal invasion | Not started | TBD | TBD | Likely expensive |
-
+| Toy reference model | Not started | TBD | TBD | Fast CI target; the only active benchmark |
+| Infectious disease time series | Deferred | TBD | — | Planned; first realistic example |
+| Spatial disease transmission | Deferred | TBD | — | Planned; requires human validation |
+| Evolutionary process | Deferred | TBD | — | Planned; requires human validation |
+| Spatio-temporal invasion | Deferred | TBD | — | Planned; likely expensive |
