@@ -1,21 +1,28 @@
 """Fuller training run + inference check for the toy Normal model.
 
-Trains the amortised posterior for a meaningful number of epochs, then checks
-that inference actually works:
+Trains the amortised posterior for a meaningful number of epochs, then checks that
+inference actually works, using **BayesFlow's built-in diagnostics** rather than
+hand-rolled metrics:
 
-1. **Parameter recovery** — over many fresh test datasets, do posterior means
-   track the true mu / sigma? (RMSE and correlation, plus a scatter plot.)
-2. **Simulation-based calibration (SBC)** — are the rank statistics roughly
-   uniform? (Systematic non-uniformity means the posteriors are mis-calibrated.)
-3. **Grid cross-check** — on a few datasets, does the BayesFlow posterior mean
-   agree with the exact grid-reference posterior from ``diagnostics.py``?
+1. **Parameter recovery** — do posterior means track the true mu / sigma?
+   (normalised RMSE and correlation, plus a recovery plot.)
+2. **Calibration (SBC)** — is the posterior calibrated? (ECDF-based calibration
+   error, plus a calibration-ECDF plot — the modern SBC variant.)
+3. **Sensitivity** — posterior z-score vs. posterior contraction. This is what
+   distinguishes a genuinely *poorly-identified* parameter (low contraction, small
+   |z|) from a *biased* inference engine (large |z|). See the
+   ``workflow-orchestration`` skill, stage 6.
+4. **Grid cross-check** — on a few datasets, does the BayesFlow posterior mean
+   agree with the exact grid-reference posterior from ``diagnostics.py``? That grid
+   reference is the one, bespoke, model-specific ground truth BayesFlow cannot
+   provide.
 
 Run (needs a backend):
 
     KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/run_validation.py
 
-Evaluation is batched by set size N so that JAX compiles at most once per N.
-Plots (if matplotlib is available) are written to ``outputs/`` next to this file.
+Sampling is batched by set size N so JAX compiles at most once per N. Plots (if
+matplotlib is available) are written to ``outputs/`` next to this file.
 """
 
 from __future__ import annotations
@@ -26,6 +33,7 @@ from collections import defaultdict
 
 import numpy as np
 
+import bayesflow.diagnostics as bfd
 from simulator import prior, meta, likelihood
 import diagnostics as diag
 from train import build_workflow
@@ -33,47 +41,56 @@ from train import build_workflow
 OUTDIR = os.path.join(os.path.dirname(__file__), "outputs")
 
 
-def _draws(samples_key) -> np.ndarray:
-    """Flatten one dataset's posterior draws to 1-D."""
-    return np.asarray(samples_key).reshape(-1)
+def collect(workflow, n_test: int, n_samples: int, seed: int = 7):
+    """Sample posteriors over many fresh test datasets.
 
-
-def evaluate(workflow, n_test: int, n_samples: int, seed: int = 7) -> dict:
+    Returns ``(estimates, targets)`` in BayesFlow's diagnostics format:
+    ``estimates[name]`` has shape (num_datasets, num_samples, 1) and
+    ``targets[name]`` has shape (num_datasets, 1). Datasets are bucketed by set
+    size N so JAX compiles at most once per N.
+    """
     np.random.seed(seed)
-
-    # Draw the test set, then bucket by N so we can sample each shape in one call.
     buckets: dict[int, list] = defaultdict(list)
     for _ in range(n_test):
         p, m = prior(), meta()
         obs = likelihood(p["mu"], p["sigma"], m["N"])
         buckets[m["N"]].append((p["mu"], p["sigma"], obs["x"]))
 
-    true = {"mu": [], "sigma": []}
-    est = {"mu": [], "sigma": []}
-    rank = {"mu": [], "sigma": []}
-
+    mu_e, sig_e, mu_t, sig_t = [], [], [], []
     for N, items in sorted(buckets.items()):
         X = np.stack([it[2] for it in items]).astype("float32")   # (k, N)
-        samples = workflow.sample(conditions={"x": X}, num_samples=n_samples)
-        mu_s = np.asarray(samples["mu"])       # (k, n_samples[, 1])
-        sig_s = np.asarray(samples["sigma"])
-        for i, (mu_t, sig_t, _) in enumerate(items):
-            mud, sgd = mu_s[i].reshape(-1), sig_s[i].reshape(-1)
-            true["mu"].append(mu_t);   est["mu"].append(mud.mean())
-            true["sigma"].append(sig_t); est["sigma"].append(sgd.mean())
-            rank["mu"].append(diag.sbc_rank(mu_t, mud))
-            rank["sigma"].append(diag.sbc_rank(sig_t, sgd))
+        s = workflow.sample(conditions={"x": X}, num_samples=n_samples)
+        k = len(items)
+        mu_e.append(np.asarray(s["mu"]).reshape(k, n_samples, 1))
+        sig_e.append(np.asarray(s["sigma"]).reshape(k, n_samples, 1))
+        mu_t += [it[0] for it in items]
+        sig_t += [it[1] for it in items]
 
-    out = {"n_test": n_test, "n_samples": n_samples, "recovery": {}, "sbc": {}}
+    estimates = {"mu": np.concatenate(mu_e), "sigma": np.concatenate(sig_e)}
+    targets = {"mu": np.array(mu_t).reshape(-1, 1),
+               "sigma": np.array(sig_t).reshape(-1, 1)}
+    return estimates, targets
+
+
+def _metric(fn, estimates, targets) -> dict:
+    """Reduce a BayesFlow metric function to {variable_name: value}."""
+    r = fn(estimates, targets)
+    return dict(zip(r["variable_names"], np.asarray(r["values"]).ravel()))
+
+
+def report_metrics(estimates, targets) -> None:
+    rmse = _metric(bfd.metrics.root_mean_squared_error, estimates, targets)
+    corr = _metric(bfd.metrics.correlation, estimates, targets)
+    cal = _metric(bfd.metrics.calibration_error, estimates, targets)
+    zsc = _metric(bfd.metrics.posterior_z_score, estimates, targets)
+    con = _metric(bfd.metrics.posterior_contraction, estimates, targets)
+    print("  (lower NRMSE / higher corr = better recovery; calibration error ~0 = "
+          "calibrated;\n   contraction near 1 = informative, near 0 = poorly "
+          "identified; mean z near 0 = unbiased)")
     for name in ("mu", "sigma"):
-        t, e = np.array(true[name]), np.array(est[name])
-        out["recovery"][name] = diag.recovery_summary(t, e)
-        r = np.array(rank[name]) / n_samples          # normalise ranks to [0, 1]
-        # For a calibrated posterior these are ~Uniform(0,1): mean ~0.5, std ~0.289.
-        out["sbc"][name] = dict(mean=float(r.mean()), std=float(r.std()))
-        out[f"_scatter_{name}"] = (t, e)
-        out[f"_ranks_{name}"] = r
-    return out
+        print(f"  {name:5s}  NRMSE={rmse[name]:.3f}  corr={corr[name]:.3f}  "
+              f"cal_err={cal[name]:.3f}  | contraction={con[name]:.3f}  "
+              f"mean z={zsc[name]:+.3f}")
 
 
 def grid_crosscheck(workflow, n_datasets: int = 4, n_samples: int = 1000, seed: int = 11):
@@ -84,8 +101,8 @@ def grid_crosscheck(workflow, n_datasets: int = 4, n_samples: int = 1000, seed: 
         obs = likelihood(p["mu"], p["sigma"], m["N"])
         s = workflow.sample(conditions={"x": obs["x"][None, :].astype("float32")},
                             num_samples=n_samples)
-        bf_mu = float(_draws(s["mu"]).mean())
-        bf_sigma = float(_draws(s["sigma"]).mean())
+        bf_mu = float(np.asarray(s["mu"]).reshape(-1).mean())
+        bf_sigma = float(np.asarray(s["sigma"]).reshape(-1).mean())
         ref = diag.reference_posterior(obs["x"])
         rows.append(dict(N=m["N"], true_mu=p["mu"], true_sigma=p["sigma"],
                          bf_mu=bf_mu, grid_mu=ref["mu_mean"],
@@ -93,32 +110,26 @@ def grid_crosscheck(workflow, n_datasets: int = 4, n_samples: int = 1000, seed: 
     return rows
 
 
-def _maybe_plot(results) -> None:
+def _maybe_plot(estimates, targets) -> None:
     try:
         import matplotlib
         matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
+        import matplotlib.pyplot as plt  # noqa: F401  (ensures a backend is set)
     except ImportError:
         print("(matplotlib not available — skipping plots)")
         return
 
     os.makedirs(OUTDIR, exist_ok=True)
-    fig, axes = plt.subplots(2, 2, figsize=(9, 8))
-    for col, name in enumerate(("mu", "sigma")):
-        t, e = results[f"_scatter_{name}"]
-        ax = axes[0, col]
-        lo, hi = min(t.min(), e.min()), max(t.max(), e.max())
-        ax.plot([lo, hi], [lo, hi], "k--", lw=1)
-        ax.scatter(t, e, s=10, alpha=0.5)
-        ax.set(title=f"Recovery: {name}", xlabel="true", ylabel="posterior mean")
-        ax = axes[1, col]
-        ax.hist(results[f"_ranks_{name}"], bins=20, range=(0, 1), color="C0", alpha=0.8)
-        ax.axhline(results["n_test"] / 20, color="k", ls="--", lw=1)
-        ax.set(title=f"SBC ranks: {name}", xlabel="normalised rank", ylabel="count")
-    fig.tight_layout()
-    path = os.path.join(OUTDIR, "validation.png")
-    fig.savefig(path, dpi=110)
-    print(f"\nSaved plots to {path}")
+    specs = [
+        ("recovery", bfd.recovery, "recovery.png"),
+        ("calibration (SBC-ECDF)", bfd.calibration_ecdf, "calibration_ecdf.png"),
+        ("z-score vs contraction", bfd.z_score_contraction, "z_score_contraction.png"),
+    ]
+    for label, fn, fname in specs:
+        fig = fn(estimates, targets)
+        path = os.path.join(OUTDIR, fname)
+        fig.savefig(path, dpi=110)
+        print(f"  saved {label:26s} -> {path}")
 
 
 def main() -> None:
@@ -139,12 +150,9 @@ def main() -> None:
         num_batches_per_epoch=args.num_batches,
     )
 
-    print("\n=== Parameter recovery & SBC ===")
-    results = evaluate(workflow, n_test=args.n_test, n_samples=args.n_samples)
-    for name in ("mu", "sigma"):
-        rec, sbc = results["recovery"][name], results["sbc"][name]
-        print(f"  {name:5s}  RMSE={rec['rmse']:.3f}  corr={rec['correlation']:.3f}  "
-              f"| SBC rank mean={sbc['mean']:.3f} (~0.50)  std={sbc['std']:.3f} (~0.289)")
+    print("\n=== Recovery, calibration & sensitivity (bayesflow.diagnostics) ===")
+    estimates, targets = collect(workflow, n_test=args.n_test, n_samples=args.n_samples)
+    report_metrics(estimates, targets)
 
     print("\n=== Grid cross-check (BayesFlow vs exact grid posterior mean) ===")
     for r in grid_crosscheck(workflow):
@@ -152,7 +160,8 @@ def main() -> None:
               f"grid={r['grid_mu']:+.2f}   sigma: true={r['true_sigma']:.2f} "
               f"bf={r['bf_sigma']:.2f} grid={r['grid_sigma']:.2f}")
 
-    _maybe_plot(results)
+    print("\n=== Plots ===")
+    _maybe_plot(estimates, targets)
 
 
 if __name__ == "__main__":

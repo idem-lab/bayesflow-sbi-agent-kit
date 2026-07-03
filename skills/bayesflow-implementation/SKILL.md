@@ -64,20 +64,37 @@ the truth on average while being mis-calibrated. Always also run simulation-base
 calibration (SBC) and check the rank histograms are roughly uniform. In the toy
 example, `sigma` had strong recovery yet biased SBC until it was constrained.
 
+**Use BayesFlow's own diagnostics — do not hand-roll these metrics.** The
+`bayesflow.diagnostics` module takes `estimates` (a dict of posterior draws, shape
+`(datasets, samples, dim)`) and `targets` (a dict of true values) — exactly what
+`workflow.sample(...)` returns — and provides:
+
+    import bayesflow.diagnostics as bfd
+    bfd.metrics.root_mean_squared_error(estimates, targets)   # recovery
+    bfd.metrics.correlation(estimates, targets)
+    bfd.metrics.calibration_error(estimates, targets)         # SBC (ECDF-based)
+    bfd.metrics.posterior_z_score(estimates, targets)         # sensitivity
+    bfd.metrics.posterior_contraction(estimates, targets)
+    bfd.recovery(estimates, targets)                          # plots (matplotlib Figures)
+    bfd.calibration_ecdf(estimates, targets)
+    bfd.z_score_contraction(estimates, targets)
+
 Judge recovery **relative to the posterior's own uncertainty**, not as point
 accuracy: correlation/RMSE of the posterior *mean* are width-blind and look "broken"
-whenever the data are uninformative, even when inference is perfect. Report
-**posterior contraction** (1 − Var_post/Var_prior) and the **posterior z-score**
-((mean − truth)/sd_post) alongside them — low contraction with small |z| **and**
-uniform SBC is a genuinely poorly-identified parameter (a correct, honest-wide
-posterior), not an engine bug, so don't retrain to "fix" it. See the
-`workflow-orchestration` skill (stage 6) for the sensitivity-plot quadrants and
-references.
+whenever the data are uninformative, even when inference is perfect. That is why you
+also read **posterior contraction** (1 − Var_post/Var_prior) and the **posterior
+z-score** ((mean − truth)/sd_post): low contraction with small |z| **and** low
+calibration error is a genuinely poorly-identified parameter (a correct, honest-wide
+posterior), not an engine bug, so don't retrain to "fix" it. `bfd.z_score_contraction`
+plots exactly this. See the `workflow-orchestration` skill (stage 6) for the
+sensitivity-plot quadrants and references.
 
-Where the problem is low-dimensional, cross-check the amortised posterior against
-an **exact reference** (a grid or analytic posterior) — the strongest possible
-check. Build such references from validated libraries (`scipy.stats`) rather than
-hand-coding densities, which is error-prone (easy to drop a normalising constant).
+The one thing BayesFlow cannot give you is an **exact reference posterior**. Where
+the problem is low-dimensional, cross-check the amortised posterior against a grid or
+analytic posterior — the strongest possible check. Build such references from
+validated libraries (`scipy.stats`) rather than hand-coding densities, which is
+error-prone (easy to drop a normalising constant). The toy example's `diagnostics.py`
+is a worked instance.
 
 ## Backend
 

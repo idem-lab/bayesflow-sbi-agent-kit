@@ -25,9 +25,10 @@ Required checks:
 - [x] Prior predictive simulation — `simulator.py`, verified (tests pass)
 - [x] Training smoke test — `train.py --smoke` runs (BayesFlow 2.0.12, jax backend)
 - [x] Posterior sampling smoke test — `train.py` samples the posterior
-- [x] Parameter recovery — `run_validation.py` (40 epochs): mu corr 0.96, sigma corr 0.94; means track the exact grid reference
-- [x] Calibration (SBC) — mu and sigma ranks ~uniform (sigma unbiased after `.constrain("sigma", lower=0)`); mild parameter-agnostic underdispersion remains
-- [ ] Posterior predictive report — not yet implemented (recovery/SBC/grid-crosscheck done instead)
+- [x] Parameter recovery — `run_validation.py` (40 epochs), via `bayesflow.diagnostics`: mu corr ~0.92, sigma corr ~0.87 (representative); means track the exact grid reference
+- [x] Calibration (SBC) — ECDF-based calibration error small for both (mu ~0.04, sigma ~0.07); sigma unbiased after `.constrain("sigma", lower=0)` (mean z ~0); mild residual sigma bias/underdispersion remains
+- [x] Sensitivity — posterior z-score vs. contraction (`bayesflow.diagnostics.z_score_contraction`); both parameters well-identified (contraction ~0.9) under these priors
+- [ ] Posterior predictive report — not yet implemented (recovery/SBC/sensitivity/grid-crosscheck done instead)
 
 ## Planned benchmarks (deferred)
 
@@ -42,7 +43,7 @@ Kept as a roadmap only — not yet in scope.
 
 | Benchmark | Status | Owner | Last checked | Notes |
 |---|---|---:|---:|---|
-| Toy reference model | Inference verified | TBD | TBD | 7/7 tests pass; recovers params (mu corr 0.96, sigma 0.94), matches exact grid posterior, mu & sigma SBC unbiased (sigma needs constrain lower=0) |
+| Toy reference model | Inference verified | TBD | TBD | 6/6 tests pass; recovers params (mu corr ~0.92, sigma ~0.87), matches exact grid posterior, mu & sigma calibrated via `bayesflow.diagnostics` (sigma needs constrain lower=0) |
 | Infectious disease time series | Deferred | TBD | — | Planned; first realistic example |
 | Spatial disease transmission | Deferred | TBD | — | Planned; requires human validation |
 | Evolutionary process | Deferred | TBD | — | Planned; requires human validation |

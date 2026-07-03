@@ -112,19 +112,6 @@ def test_reference_posterior_recovers_parameters():
     assert abs(ref["sigma_mean"] - true_sigma) < 0.4
 
 
-def test_recovery_and_sbc_helpers():
-    _skip_if_no_diag()
-    truth = np.array([0.0, 1.0, -1.0, 2.0])
-    est = truth + np.array([0.05, -0.05, 0.1, -0.1])
-    summary = diag.recovery_summary(truth, est)
-    assert summary["rmse"] < 0.2
-    assert summary["correlation"] > 0.99
-
-    # Rank of the true value among draws it sits in the middle of ~ L/2.
-    draws = np.linspace(-3, 3, 101)
-    assert diag.sbc_rank(0.0, draws) == 50
-
-
 def _run_all():
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     passed = skipped = 0

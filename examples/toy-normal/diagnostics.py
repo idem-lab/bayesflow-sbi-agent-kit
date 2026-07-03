@@ -1,24 +1,23 @@
-"""Diagnostics for the toy Normal model.
+"""Reference posterior for the toy Normal model.
 
-Two roles:
+This provides a **reference posterior** computed on a (mu, sigma) grid. Because
+this toy is low-dimensional, we can evaluate the exact (unnormalised) posterior
+directly and normalise it numerically. This gives a ground truth to compare a
+trained BayesFlow posterior against — the kind of check that is impossible for
+real models and precisely why a toy reference model is worth having. It is also
+the one diagnostic here that BayesFlow cannot provide, because it is specific to
+this model.
 
-1. A **reference posterior** computed on a (mu, sigma) grid. Because this toy is
-   low-dimensional, we can evaluate the exact (unnormalised) posterior directly
-   and normalise it numerically. This gives a ground truth to compare a trained
-   BayesFlow posterior against — the kind of check that is impossible for real
-   models and precisely why a toy reference model is worth having.
-
-2. Small helpers for **parameter recovery** and **simulation-based calibration
-   (SBC)** ranks that operate on arrays of posterior draws, so they work with
-   samples from BayesFlow or from the grid reference below.
+Recovery, calibration (SBC) and the z-score/contraction sensitivity diagnostic are
+**not** hand-rolled: they come from ``bayesflow.diagnostics`` (see
+``run_validation.py``), in keeping with the "prefer validated libraries" principle.
 
 All probability densities come from ``scipy.stats`` rather than being hand-coded,
 so the prior and likelihood are correct (including normalising constants) by
 construction. Priors must match ``simulator.py`` exactly:
 mu ~ Normal(0, 1), sigma ~ HalfNormal(1).
 
-Requires NumPy and SciPy (no deep-learning backend). The recovery/SBC helpers at
-the bottom are pure NumPy.
+Requires NumPy and SciPy (no deep-learning backend).
 """
 
 from __future__ import annotations
@@ -90,27 +89,6 @@ def reference_posterior(
         mu_mean=mu_mean,
         sigma_mean=sigma_mean,
     )
-
-
-# --------------------------------------------------------------------------- #
-# Recovery and calibration helpers (operate on posterior draws)
-# --------------------------------------------------------------------------- #
-def recovery_summary(true_values: np.ndarray, posterior_means: np.ndarray) -> dict:
-    """Root-mean-squared error and correlation between truth and estimates."""
-    true_values = np.asarray(true_values, dtype=float)
-    posterior_means = np.asarray(posterior_means, dtype=float)
-    rmse = float(np.sqrt(np.mean((true_values - posterior_means) ** 2)))
-    corr = float(np.corrcoef(true_values, posterior_means)[0, 1])
-    return dict(rmse=rmse, correlation=corr)
-
-
-def sbc_rank(true_value: float, posterior_samples: np.ndarray) -> int:
-    """SBC rank statistic: number of posterior draws below the true value.
-
-    For a calibrated posterior these ranks are uniform on {0, ..., L} across many
-    simulated datasets. A pure count, so it is sampler-agnostic.
-    """
-    return int(np.sum(np.asarray(posterior_samples) < true_value))
 
 
 if __name__ == "__main__":

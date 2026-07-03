@@ -30,13 +30,16 @@ fixed-size embedding. This is the core BayesFlow capability the toy exercises.
 | File | Needs | Purpose |
 |---|---|---|
 | `simulator.py` | NumPy | The model: `prior`, `meta` (variable N), `likelihood`, and a lazy `make_simulator()`. |
-| `diagnostics.py` | NumPy + SciPy | **Reference posterior** on a (mu, sigma) grid, plus recovery / SBC helpers. |
+| `diagnostics.py` | NumPy + SciPy | **Reference posterior** on a (mu, sigma) grid — the bespoke, model-specific ground truth BayesFlow cannot provide. |
 | `train.py` | BayesFlow + backend | BayesFlow 2 adapter + DeepSet + CouplingFlow; trains and samples. |
+| `run_validation.py` | BayesFlow + backend | Fuller training run + inference checks: recovery, calibration and sensitivity via `bayesflow.diagnostics`, plus the grid cross-check. |
 | `requirements.txt` | — | Pinned dependencies and backend selection. |
 
-The split is deliberate. The model is pure NumPy; the diagnostics add only SciPy
-(whose `scipy.stats` supplies validated densities rather than hand-coded ones);
-only `train.py` needs a deep-learning backend.
+The split is deliberate. The model is pure NumPy; the grid reference adds only SciPy
+(whose `scipy.stats` supplies validated densities rather than hand-coded ones); only
+`train.py` / `run_validation.py` need a deep-learning backend. Recovery, calibration
+(SBC) and the z-score/contraction sensitivity diagnostic are **not** hand-rolled —
+they come straight from `bayesflow.diagnostics`.
 
 ## What this covers in the workflow
 
@@ -81,22 +84,25 @@ KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/train.py           # full
 
 Verified end-to-end on Python 3.12 (BayesFlow 2.0.12, Keras 3.15, JAX backend):
 
-- **Simulator + diagnostics** — all 7 tests pass, including a check that the
+- **Simulator + grid reference** — all 6 tests pass, including a check that the
   prior integrates to 1. Densities come from `scipy.stats` (validated), not
   hand-coded.
 - **`train.py --smoke`** — trains, summarises, and samples the posterior.
-- **`run_validation.py` (40 epochs, 300 test datasets)** — the inference works:
-  - Recovery: μ correlation **0.96** (RMSE 0.25), σ correlation **0.94** (RMSE 0.19).
+- **`run_validation.py` (40 epochs, 300 test datasets)** — the inference works.
+  All metrics below come from `bayesflow.diagnostics`; a representative run (numbers
+  vary run to run):
+  - Recovery: μ correlation **0.92** (NRMSE 0.26), σ correlation **0.87** (NRMSE 0.32).
+  - Calibration (ECDF-based SBC): calibration error is small for both — μ **0.04**,
+    σ **0.07**. Mean posterior z-score ≈ **−0.03** for μ (unbiased) and **+0.15**
+    for σ (a mild residual positive bias). Posterior contraction ≈ 0.9 for both, so
+    both are well-identified under these priors.
   - Grid cross-check: BayesFlow posterior means agree with the exact grid-reference
     posterior, near-perfectly for μ and well for σ (largest gaps at small N).
-  - SBC: rank statistics are ~uniform for **both** μ (mean 0.52) and σ (mean 0.50)
-    — σ is unbiased. A mild, parameter-agnostic underdispersion remains (rank std
-    ~0.27 vs ideal 0.29, i.e. posteriors slightly overconfident); more epochs or a
-    larger flow would tighten it.
 
 The σ calibration depends on `.constrain("sigma", lower=0)` in the adapter
 (`train.py`): σ is positive, but the flow works in unconstrained ℝ, so without the
 constraint σ posteriors are biased near the σ=0 boundary. See the comment there.
 
 The smoke run only checks the pipeline runs; `run_validation.py` is the real
-inference check and writes recovery / SBC plots to `outputs/`.
+inference check and writes recovery, calibration-ECDF and z-score/contraction plots
+to `outputs/`.
