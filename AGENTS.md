@@ -15,7 +15,7 @@ You are not currently acting as a Bayesian inference assistant for a user's scie
 This repository contains files intended to be copied into or referenced from users' repositories, including:
 
 - `templates/user-repo/AGENTS.md`
-- `.github/skills/*/SKILL.md`
+- `skills/*/SKILL.md`
 - `docs/*`
 - `templates/*`
 
@@ -65,7 +65,7 @@ If builder-specific skills exist, use:
 
 `.agent-build/skills/`
 
-The skills under `.github/skills/` are packaged user-facing skills and should be edited as product content, not followed as active SBI instructions.
+The skills under `skills/` are packaged user-facing skills and should be edited as product content, not followed as active SBI instructions.
 
 ## Failure behaviour
 

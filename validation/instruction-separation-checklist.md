@@ -17,7 +17,7 @@ Ensure that agents building this repository do not confuse repository-developmen
 - [ ] `templates/user-repo/AGENTS.md` contains `MODE: USER-SBI-ASSISTANT`.
 - [ ] Canonical user-facing skills live in `skills/`.
 - [ ] Builder-only skills live in `.agent-build/skills/`.
-- [ ] User-facing skills are not placed under `.github/skills/` unless added as an optional integration.
+- [ ] User-facing skills live under `skills/`.
 
 ## Required warnings
 
