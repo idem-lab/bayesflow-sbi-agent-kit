@@ -18,8 +18,6 @@ The user-facing agent instructions are stored in:
 
 - `templates/user-repo/AGENTS.md`
 
-Agents working on this repository should not conduct SBI unless explicitly asked to run a test, smoke test, or validation example.
-
 ## Agent skills
 
 The reusable, user-facing guidance is packaged as **skills** in `skills/`. Each is a
@@ -52,7 +50,7 @@ flowchart TD
         S1["1 · Project intake"] --> S2["2 · Prior review 🔒"] --> S3["3 · Prior predictive check"]
     end
     subgraph ActII["Act II · prove the method works on simulated data"]
-        S4["4 · Workflow design"] --> S5["5 · Pilot training"] --> S6["6 · Parameter recovery"] --> S7["7 · Calibration &#40;SBC&#41;"] --> S8["8 · Posterior predictive 🔒"]
+        S4["4 · Workflow design"] --> S5["5 · Pilot training"] --> S6["6 · Parameter recovery"] --> S7["7 · Calibration #40;SBC#41;"] --> S8["8 · Posterior predictive 🔒"]
     end
     subgraph ActIII["Act III · use it on your real data &amp; review"]
         S9["9 · Reliability / out-of-distribution check 🔒"] --> S10["10 · Human review 🔒"]
