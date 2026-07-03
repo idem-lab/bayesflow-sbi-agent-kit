@@ -64,6 +64,16 @@ the truth on average while being mis-calibrated. Always also run simulation-base
 calibration (SBC) and check the rank histograms are roughly uniform. In the toy
 example, `sigma` had strong recovery yet biased SBC until it was constrained.
 
+Judge recovery **relative to the posterior's own uncertainty**, not as point
+accuracy: correlation/RMSE of the posterior *mean* are width-blind and look "broken"
+whenever the data are uninformative, even when inference is perfect. Report
+**posterior contraction** (1 − Var_post/Var_prior) and the **posterior z-score**
+((mean − truth)/sd_post) alongside them — low contraction with small |z| **and**
+uniform SBC is a genuinely poorly-identified parameter (a correct, honest-wide
+posterior), not an engine bug, so don't retrain to "fix" it. See the
+`workflow-orchestration` skill (stage 6) for the sensitivity-plot quadrants and
+references.
+
 Where the problem is low-dimensional, cross-check the amortised posterior against
 an **exact reference** (a grid or analytic posterior) — the strongest possible
 check. Build such references from validated libraries (`scipy.stats`) rather than

@@ -12,7 +12,11 @@ You must not modify biological, ecological, epidemiological, evolutionary, or me
 
 If the guidance repository is present as a submodule, treat it as read-only unless the human explicitly asks you to update the submodule.
 
-Follow the full Bayesian workflow, requesting user feedback and confirmation at each stage:
+Follow the full Bayesian workflow, requesting user feedback and confirmation at each stage.
+It is a loop, not a line: a failed check sends you back to an earlier stage, not
+forward. See the `workflow-orchestration` skill for the stage-by-stage map, the
+human-approval gates, and where each failed check routes back to.
+
  - project intake
  - prior review
  - prior predictive checks
@@ -21,7 +25,14 @@ Follow the full Bayesian workflow, requesting user feedback and confirmation at 
  - parameter recovery
  - simulation-based calibration
  - posterior predictive checks
+ - real-data inference + reliability (out-of-distribution) check
  - human review
+
+At the start of a project, explain this whole workflow to the user in plain language
+before writing code, and create a status ledger (`sbi-workflow-status.md`, template
+in `agentic-sbi/templates/user-repo/`) to track progress. Keep the ledger updated at
+every stage transition, gate, and loop-back, show a one-line status each turn, and
+re-orient the user whenever a stage finishes. See the `workflow-orchestration` skill.
 
 
 This project uses the SBI guidance kit at:

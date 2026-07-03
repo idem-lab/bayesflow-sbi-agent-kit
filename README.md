@@ -20,6 +20,36 @@ The user-facing agent instructions are stored in:
 
 Agents working on this repository should not conduct SBI unless explicitly asked to run a test, smoke test, or validation example.
 
+## Agent skills
+
+The reusable, user-facing guidance is packaged as **skills** in `skills/`. Each is a
+`skills/<name>/SKILL.md` file that a user's SBI agent loads on demand to perform (or
+help the user through) a specific part of the workflow. Current skills:
+
+- [`workflow-orchestration`](skills/workflow-orchestration/SKILL.md) — the top-level
+  map (see below).
+- [`bayesflow-implementation`](skills/bayesflow-implementation/SKILL.md) — practical,
+  validated engineering tips for building BayesFlow 2 workflows (constraining
+  parameters, summary networks for exchangeable data, verifying inference).
+
+### Our definition of a principled Bayesian workflow with SBI
+
+[**`skills/workflow-orchestration/SKILL.md`**](skills/workflow-orchestration/SKILL.md)
+is the canonical definition of the principled Bayesian simulation-based inference
+workflow this kit promotes. It lays out the workflow as an explicit **loop, not a
+line** — a failed check sends you back to an earlier stage — across ten stages:
+project intake → prior review → prior predictive check → workflow design → pilot
+training → parameter recovery → calibration (SBC) → posterior predictive check →
+real-data inference + reliability (out-of-distribution) check → human review.
+
+It marks hard **human-approval gates** at every scientific decision and enforces the
+central principle that the **agent owns the engineering while the human owns the
+science**: when a check fails, the agent *diagnoses* the likely cause but never
+changes the model, priors, or simulator on its own. The workflow synthesises the
+published Bayesian-workflow literature (Gelman et al. 2020; Schad, Betancourt &
+Vasishth 2021; the Amortized Bayesian Workflow, 2024) — see the skill's References
+section.
+
 ## Intended downstream use
 
 A user may add this repository to their own project, for example as a git submodule:
