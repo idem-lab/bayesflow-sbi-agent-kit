@@ -28,6 +28,10 @@ help the user through) a specific part of the workflow. Current skills:
 
 - [`workflow-orchestration`](skills/workflow-orchestration/SKILL.md) — the top-level
   map (see below).
+- [`prior-elicitation`](skills/prior-elicitation/SKILL.md) — helps the user specify
+  priors (stage 2): triage each parameter by how much they know, elicit on the
+  observable scale, and commit to quantitative summary-statistic targets that the
+  prior predictive check then tests.
 - [`bayesflow-implementation`](skills/bayesflow-implementation/SKILL.md) — practical,
   validated engineering tips for building BayesFlow 2 workflows (constraining
   parameters, summary networks for exchangeable data, verifying inference).

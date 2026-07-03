@@ -28,6 +28,10 @@ does by default) is only an affine rescale and does **not** fix a hard boundary 
 you need the constraint. Use `lower=`/`upper=` for other bounded parameters
 (e.g. probabilities in [0, 1]).
 
+The constraint must match the parameter's **support**, which is a modelling choice
+fixed when the prior is chosen — keep it consistent with what the `prior-elicitation`
+skill recorded (a positive scale gets a positive-support prior *and* `lower=0`).
+
 ## Exchangeable / variable-length observations → as_set + DeepSet
 
 When each dataset is an unordered set of i.i.d. observations (optionally with a

@@ -115,7 +115,25 @@ upfront training cost may not be justified — say so, and let the human decide.
 ## 2. Prior review
 
 **Goal:** agree priors that encode the human's domain knowledge. Route to the
-`prior-elicitation` skill if present. Priors are a *scientific* choice.
+`prior-elicitation` skill — it drives this stage. Priors are a *scientific* choice.
+
+Key moves that skill runs (do them here even without it):
+
+- **Triage the parameters** by how much the human can reason about each directly:
+  (a) direct & informative (evidence exists) → fit to their stated value + record
+  the reference; (b) rough idea with real uncertainty → quantile elicitation +
+  pushforward; (c) can't reason directly → elicit jointly on the observable scale,
+  and if there are several, consider the algorithmic route (`elicito`).
+- **Elicit on the observable scale, not the raw parameter scale**, and translate to
+  distributions by *simulation* (the pushforward).
+- **Commit to quantitative target summary statistics of the simulated data** — the
+  acceptance criteria stage 3 will test, written down *before* the pushforward.
+- Remember the SBI-specific point: **the prior is the training distribution**, so
+  its pushforward must *cover* the plausible real data or stage 9 will be OOD. Flat
+  priors are not an option.
+
+Record everything in `prior-specification.md` (template in
+`templates/user-repo/`); the committed target summaries feed straight into stage 3.
 
 **GATE:** the human must approve the priors before you proceed.
 
@@ -127,9 +145,11 @@ show the human summaries/plots of the simulated data.
 
 **What you are looking for:** simulated datasets that look like the kind of data
 the human expects — right order of magnitude, right support, no absurdities
-(e.g. negative counts, impossible rates). This is the cheapest check in the whole
-workflow and catches prior/model mistakes that are otherwise invisible until much
-later.
+(e.g. negative counts, impossible rates). Test against the **quantitative target
+summary statistics the human committed to at stage 2** (in `prior-specification.md`),
+not just an eyeball — those numbers are the pre-registered acceptance criteria. This
+is the cheapest check in the whole workflow and catches prior/model mistakes that are
+otherwise invisible until much later.
 
 **On fail:** implausible simulated data → back to **stage 2**. Diagnose, do not fix
 the science: point to the likely cause (a prior that is too wide or on the wrong
