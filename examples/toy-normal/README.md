@@ -84,8 +84,19 @@ Verified end-to-end on Python 3.12 (BayesFlow 2.0.12, Keras 3.15, JAX backend):
 - **Simulator + diagnostics** — all 7 tests pass, including a check that the
   prior integrates to 1. Densities come from `scipy.stats` (validated), not
   hand-coded.
-- **`train.py --smoke`** — runs: trains, summarises, and samples the posterior.
+- **`train.py --smoke`** — trains, summarises, and samples the posterior.
+- **`run_validation.py` (40 epochs, 300 test datasets)** — the inference works:
+  - Recovery: μ correlation **0.96** (RMSE 0.25), σ correlation **0.94** (RMSE 0.19).
+  - Grid cross-check: BayesFlow posterior means agree with the exact grid-reference
+    posterior, near-perfectly for μ and well for σ (largest gaps at small N).
+  - SBC: rank statistics are ~uniform for **both** μ (mean 0.52) and σ (mean 0.50)
+    — σ is unbiased. A mild, parameter-agnostic underdispersion remains (rank std
+    ~0.27 vs ideal 0.29, i.e. posteriors slightly overconfident); more epochs or a
+    larger flow would tighten it.
 
-The smoke run uses tiny networks and 2 epochs; it checks that the pipeline runs,
-not that the posterior is accurate. A fuller run (more epochs, then parameter
-recovery / SBC against the grid reference) is the next step for real validation.
+The σ calibration depends on `.constrain("sigma", lower=0)` in the adapter
+(`train.py`): σ is positive, but the flow works in unconstrained ℝ, so without the
+constraint σ posteriors are biased near the σ=0 boundary. See the comment there.
+
+The smoke run only checks the pipeline runs; `run_validation.py` is the real
+inference check and writes recovery / SBC plots to `outputs/`.

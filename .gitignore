@@ -23,3 +23,7 @@ venv/
 htmlcov/
 dist/
 build/
+
+# Example run outputs (plots, saved models)
+outputs/
+*.keras

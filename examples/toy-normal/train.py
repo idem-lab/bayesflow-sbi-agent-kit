@@ -39,6 +39,15 @@ def build_workflow():
     # `N` (from the meta function) only sizes each simulation and is not used as
     # a condition here, so we drop it. `.to_array()` first so every field is a
     # NumPy array before dtype conversion.
+    #
+    # `sigma` is a positive scale parameter, but the CouplingFlow models the
+    # inference variables in unconstrained R. Without a constraint the flow can
+    # place mass that maps to sigma <= 0 and is biased near the sigma=0 boundary
+    # (where the HalfNormal prior has its mode). `.constrain("sigma", lower=0)`
+    # maps sigma to unconstrained space for the flow and inverts posterior draws
+    # back to sigma > 0. (Inference variables are already standardized by the
+    # BasicWorkflow default, which is only an affine rescale and does not fix the
+    # boundary — hence the constraint is what removes the sigma bias.)
     adapter = (
         bf.adapters.Adapter()
         .to_array()
@@ -46,6 +55,7 @@ def build_workflow():
         .convert_dtype("float64", "float32")
         .as_set("x")
         .rename("x", "summary_variables")
+        .constrain("sigma", lower=0)
         .concatenate(["mu", "sigma"], into="inference_variables")
     )
 

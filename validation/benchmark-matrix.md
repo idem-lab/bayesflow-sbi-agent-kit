@@ -25,8 +25,9 @@ Required checks:
 - [x] Prior predictive simulation — `simulator.py`, verified (tests pass)
 - [x] Training smoke test — `train.py --smoke` runs (BayesFlow 2.0.12, jax backend)
 - [x] Posterior sampling smoke test — `train.py` samples the posterior
-- [x] Parameter recovery structure — grid reference + helpers in `diagnostics.py` (scipy densities; verified by tests)
-- [ ] Posterior predictive report — structure present; pending a fuller trained model
+- [x] Parameter recovery — `run_validation.py` (40 epochs): mu corr 0.96, sigma corr 0.94; means track the exact grid reference
+- [x] Calibration (SBC) — mu and sigma ranks ~uniform (sigma unbiased after `.constrain("sigma", lower=0)`); mild parameter-agnostic underdispersion remains
+- [ ] Posterior predictive report — not yet implemented (recovery/SBC/grid-crosscheck done instead)
 
 ## Planned benchmarks (deferred)
 
@@ -41,7 +42,7 @@ Kept as a roadmap only — not yet in scope.
 
 | Benchmark | Status | Owner | Last checked | Notes |
 |---|---|---:|---:|---|
-| Toy reference model | Smoke-passing | TBD | TBD | 7/7 tests pass; train.py --smoke runs end-to-end (py3.12, jax). Fuller recovery/SBC run pending |
+| Toy reference model | Inference verified | TBD | TBD | 7/7 tests pass; recovers params (mu corr 0.96, sigma 0.94), matches exact grid posterior, mu & sigma SBC unbiased (sigma needs constrain lower=0) |
 | Infectious disease time series | Deferred | TBD | — | Planned; first realistic example |
 | Spatial disease transmission | Deferred | TBD | — | Planned; requires human validation |
 | Evolutionary process | Deferred | TBD | — | Planned; requires human validation |
