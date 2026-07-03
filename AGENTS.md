@@ -70,3 +70,8 @@ The skills under `.github/skills/` are packaged user-facing skills and should be
 ## Failure behaviour
 
 If there is ambiguity about whether a task is repository development or real SBI, assume repository development and ask the human before running inference.
+
+## Validation
+
+Use validation/ when checking whether this guidance repo is safe and release-ready.
+Do not treat validation/ as instructions to conduct SBI on a real model.
