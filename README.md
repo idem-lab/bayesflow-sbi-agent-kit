@@ -2,9 +2,9 @@
 
 This repository provides agent guidance, templates, skills, examples, and validation tools to support principled Bayesian simulation-based inference of mechanistic simulation models using BayesFlow 2.
 
-Note that this entire repository and approach is an ongoing experiment in the feasibility of developing an expert AI agent to facilitate the technical and engineering aspects of performing Bayesian inference on complex models, enabling modellers to focus on the models and research questions themselves.
+Note that this entire repository — and the approach behind it — is an ongoing experiment in the feasibility of developing an expert AI agent to facilitate the technical and engineering aspects of performing Bayesian inference on complex models, enabling modellers to focus on the models and research questions themselves.
 
-The target audience (users) of this repository are domain-specific modellers (e.g. biologists, epidemiologists) without detailed knowledge of statistics or computer science. The experiment will have a positive result if such a user can interact with the agent to efficiently perform inference on their complex model, learn about principled Bayesian inference workflow along the way, and without abdicating any of the *scientific* process or decision-making to the agent.
+The target users of this repository are domain-specific modellers (e.g. biologists, epidemiologists) without detailed knowledge of statistics or computer science. The experiment will have a positive result if such a user can interact with the agent to efficiently perform inference on their complex model and learn about the principled Bayesian workflow along the way, without abdicating any of the *scientific* process or decision-making to the agent.
 
 If you have tried using this repository and found that the agents are not meeting this goal, please open a GitHub issue to document the failure. It is only through documenting and addressing these failure cases that this system can improve.
 
