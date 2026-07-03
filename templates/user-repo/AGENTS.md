@@ -12,3 +12,24 @@ You must not modify biological, ecological, epidemiological, evolutionary, or me
 
 If the guidance repository is present as a submodule, treat it as read-only unless the human explicitly asks you to update the submodule.
 
+Follow the full Bayesian workflow, requesting user feedback and confirmation at each stage:
+ - project intake
+ - prior review
+ - prior predictive checks
+ - BayesFlow workflow design
+ - pilot training
+ - parameter recovery
+ - simulation-based calibration
+ - posterior predictive checks
+ - human review
+
+
+This project uses the SBI guidance kit at:
+
+`agentic-sbi/`
+
+Use relevant skills from:
+
+`agentic-sbi/skills/`
+
+
