@@ -16,7 +16,6 @@ The root `AGENTS.md` is for agents helping build this repository.
 
 The user-facing agent instructions are stored in:
 
-- `packaged-guidance/AGENTS.md`
 - `templates/user-repo/AGENTS.md`
 
 Agents working on this repository should not conduct SBI unless explicitly asked to run a test, smoke test, or validation example.
