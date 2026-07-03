@@ -42,6 +42,32 @@ project intake → prior review → prior predictive check → workflow design �
 training → parameter recovery → calibration (SBC) → posterior predictive check →
 real-data inference + reliability (out-of-distribution) check → human review.
 
+```mermaid
+flowchart TD
+    subgraph ActI["Act I · set up the model &amp; your beliefs"]
+        S1["1 · Project intake"] --> S2["2 · Prior review 🔒"] --> S3["3 · Prior predictive check"]
+    end
+    subgraph ActII["Act II · prove the method works on simulated data"]
+        S4["4 · Workflow design"] --> S5["5 · Pilot training"] --> S6["6 · Parameter recovery"] --> S7["7 · Calibration &#40;SBC&#41;"] --> S8["8 · Posterior predictive 🔒"]
+    end
+    subgraph ActIII["Act III · use it on your real data &amp; review"]
+        S9["9 · Reliability / out-of-distribution check 🔒"] --> S10["10 · Human review 🔒"]
+    end
+
+    S3 --> S4
+    S8 --> S9
+
+    S3 -.->|implausible data| S2
+    S7 -.->|biased / miscalibrated → retrain| S4
+    S8 -.->|model misfits real data| S2
+    S9 -.->|real data out-of-distribution| S2
+    S10 -.->|not fit for purpose| S2
+```
+
+**🔒 = the workflow stops for your approval.** Dashed arrows are the loop: a failed
+check sends you back — to *retraining* (an engineering fix) or all the way back to
+*your beliefs and model* (a scientific decision, always yours to make).
+
 It marks hard **human-approval gates** at every scientific decision and enforces the
 central principle that the **agent owns the engineering while the human owns the
 science**: when a check fails, the agent *diagnoses* the likely cause but never
