@@ -47,33 +47,45 @@ recovery and posterior-predictive checks against the grid reference
 ground-truth posterior to validate the amortised BayesFlow posterior against —
 a check that is impossible for real models.
 
+## Environment setup
+
+BayesFlow 2 needs Python 3.11/3.12 and a Keras 3 backend. The reproducible route
+(independent of any system/Homebrew Python) uses [`uv`](https://docs.astral.sh/uv/):
+
+```bash
+uv venv --python 3.12 .venv                                    # isolated interpreter
+uv pip install --python .venv/bin/python -r examples/toy-normal/requirements.txt
+```
+
+The simulator, diagnostics, and tests need only NumPy + SciPy; `train.py` also
+needs the backend.
+
 ## Running it
 
-Backend-free parts (run anywhere with NumPy):
+NumPy/SciPy parts:
 
 ```bash
-python3 tests/test_toy_normal.py          # or: pytest tests/test_toy_normal.py
-python3 examples/toy-normal/simulator.py  # prior-predictive peek
-python3 examples/toy-normal/diagnostics.py
+.venv/bin/python tests/test_toy_normal.py          # or: pytest tests/test_toy_normal.py
+.venv/bin/python examples/toy-normal/simulator.py  # prior-predictive peek
+.venv/bin/python examples/toy-normal/diagnostics.py
 ```
 
-Full training (needs an isolated env with a backend — see `requirements.txt`):
+Training (needs the backend):
 
 ```bash
-KERAS_BACKEND=jax python examples/toy-normal/train.py --smoke   # tiny CI run
-KERAS_BACKEND=jax python examples/toy-normal/train.py           # fuller run
+KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/train.py --smoke   # tiny run
+KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/train.py           # fuller run
 ```
 
-## Status / caveats
+## Status
 
-- **Simulator** — verified: the 3 NumPy-only tests pass here.
-- **Diagnostics** — all probability densities come from `scipy.stats`
-  (validated), not hand-coded. The 4 diagnostics tests (including a check that
-  the prior integrates to 1) require SciPy; they were **not run in the
-  development environment** because it has no working `pip`, but they run
-  wherever SciPy is installed.
-- **`train.py`** — written against the BayesFlow 2.x API but **not yet executed
-  end-to-end**; it needs a backend on Python 3.11/3.12.
+Verified end-to-end on Python 3.12 (BayesFlow 2.0.12, Keras 3.15, JAX backend):
 
-Running the diagnostics and training in a proper environment and recording
-results is the next step to tick the remaining boxes in the benchmark matrix.
+- **Simulator + diagnostics** — all 7 tests pass, including a check that the
+  prior integrates to 1. Densities come from `scipy.stats` (validated), not
+  hand-coded.
+- **`train.py --smoke`** — runs: trains, summarises, and samples the posterior.
+
+The smoke run uses tiny networks and 2 epochs; it checks that the pipeline runs,
+not that the posterior is accurate. A fuller run (more epochs, then parameter
+recovery / SBC against the grid reference) is the next step for real validation.

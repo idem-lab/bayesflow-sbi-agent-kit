@@ -22,11 +22,11 @@ Purpose:
 
 Required checks:
 
-- [x] Prior predictive simulation — `simulator.py`, verified (3 NumPy tests pass)
-- [ ] Training smoke test — `train.py --smoke` (needs backend; not yet run)
-- [ ] Posterior sampling smoke test — `train.py` (needs backend; not yet run)
-- [x] Parameter recovery structure — grid reference + helpers in `diagnostics.py` (scipy densities; 4 tests, run where scipy is installed)
-- [ ] Posterior predictive report — structure present; pending a trained model
+- [x] Prior predictive simulation — `simulator.py`, verified (tests pass)
+- [x] Training smoke test — `train.py --smoke` runs (BayesFlow 2.0.12, jax backend)
+- [x] Posterior sampling smoke test — `train.py` samples the posterior
+- [x] Parameter recovery structure — grid reference + helpers in `diagnostics.py` (scipy densities; verified by tests)
+- [ ] Posterior predictive report — structure present; pending a fuller trained model
 
 ## Planned benchmarks (deferred)
 
@@ -41,7 +41,7 @@ Kept as a roadmap only — not yet in scope.
 
 | Benchmark | Status | Owner | Last checked | Notes |
 |---|---|---:|---:|---|
-| Toy reference model | In progress | TBD | TBD | Simulator verified (3 tests); diagnostics use scipy (4 tests); training pending a backend |
+| Toy reference model | Smoke-passing | TBD | TBD | 7/7 tests pass; train.py --smoke runs end-to-end (py3.12, jax). Fuller recovery/SBC run pending |
 | Infectious disease time series | Deferred | TBD | — | Planned; first realistic example |
 | Spatial disease transmission | Deferred | TBD | — | Planned; requires human validation |
 | Evolutionary process | Deferred | TBD | — | Planned; requires human validation |

@@ -81,14 +81,13 @@ def test_prior_density_is_normalised():
     # was missing from the earlier hand-rolled priors). The joint prior density
     # must integrate to ~1 over a wide grid.
     _skip_if_no_diag()
-    mu_axis = np.linspace(-8, 8, 400)
-    sigma_axis = np.linspace(1e-4, 10, 400)
+    trapz = getattr(np, "trapezoid", None) or np.trapz  # np.trapezoid added in numpy 2.0
+    mu_axis = np.linspace(-8.0, 8.0, 400)
+    sigma_axis = np.linspace(0.0, 12.0, 400)          # half-normal support starts at 0
     mu_grid, sigma_grid = np.meshgrid(mu_axis, sigma_axis, indexing="ij")
     density = np.exp(diag._log_prior(mu_grid, sigma_grid))
-    d_mu = mu_axis[1] - mu_axis[0]
-    d_sigma = sigma_axis[1] - sigma_axis[0]
-    mass = density.sum() * d_mu * d_sigma
-    assert abs(mass - 1.0) < 1e-3, f"prior does not integrate to 1 (got {mass:.4f})"
+    mass = trapz(trapz(density, sigma_axis, axis=1), mu_axis)
+    assert abs(mass - 1.0) < 1e-3, f"prior does not integrate to 1 (got {mass:.5f})"
 
 
 def test_reference_posterior_is_normalised():

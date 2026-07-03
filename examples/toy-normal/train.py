@@ -36,8 +36,13 @@ def build_workflow():
     # The observations `x` are an exchangeable, variable-length set (N = 5..20).
     # `.as_set("x")` tells BayesFlow to treat them as a set so the DeepSet
     # summary network can map them to a fixed-size embedding regardless of N.
+    # `N` (from the meta function) only sizes each simulation and is not used as
+    # a condition here, so we drop it. `.to_array()` first so every field is a
+    # NumPy array before dtype conversion.
     adapter = (
         bf.adapters.Adapter()
+        .to_array()
+        .drop("N")
         .convert_dtype("float64", "float32")
         .as_set("x")
         .rename("x", "summary_variables")
