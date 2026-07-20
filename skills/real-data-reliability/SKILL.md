@@ -107,7 +107,10 @@ interpreting the posterior predictive check and the human review** — an untrus
 - **On OOD:** route to `prior-elicitation` (stage 2) with a specific diagnosis; the
   widen-and-retrain decision is the human's, through the gate.
 - **Engineering mechanics** (`workflow.sample`, summary embeddings) are in
-  `bayesflow-implementation`; the worked reference is `examples/toy-normal/`.
+  `bayesflow-implementation`. The worked reference is
+  `examples/toy-normal/reliability.py`, which runs exactly this check — BayesFlow's
+  `summary_space_comparison` (MMD in summary space vs. a prior-predictive reference,
+  with a bootstrap null) on an in-distribution and an out-of-distribution sample.
 
 ## References
 

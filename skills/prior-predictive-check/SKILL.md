@@ -216,7 +216,7 @@ same way. State which read-out failed and localise the likely cause with evidenc
   the real data. Show *which* summaries of the real data fall at/outside the simulated
   cloud's edge and which prior(s) would need to widen. Widening a prior is a
   **scientific** change the human decides and approves; do not silently widen it.
-  Route to stage 2, and flag that this is the stage-9 OOD failure caught early.
+  Route to stage 2, and flag that this is the stage-8 OOD failure caught early.
 - **Simulator health fail (a bug)** → the one exception where the fix is usually
   **engineering, not science**. A `NaN` from an unguarded `log(0)`, a crash on an
   edge-case sample size, an indexing error — you *may* fix these, but still **surface
@@ -253,7 +253,9 @@ first stage that builds and trains a network.
 - **On fail:** route back to `prior-elicitation` (stage 2) with a specific diagnosis;
   do not edit priors or mechanism yourself.
 - **Engineering mechanics** (drawing from the simulator, adapters) live in
-  `bayesflow-implementation`; the worked reference is `examples/toy-normal/`.
+  `bayesflow-implementation`. For the draw itself, `examples/toy-normal/simulator.py`
+  provides the `prior`/`meta`/`likelihood` functions; note the toy does not implement
+  the stage-3 *check* (coverage, target tests, presentation) — that is this skill's job.
 
 ## References
 

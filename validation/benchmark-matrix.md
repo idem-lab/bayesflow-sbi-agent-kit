@@ -26,8 +26,9 @@ Required checks:
 - [x] Training smoke test — `train.py --smoke` runs (BayesFlow 2.0.12, jax backend)
 - [x] Posterior sampling smoke test — `train.py` samples the posterior
 - [x] Parameter recovery — `run_validation.py` (40 epochs), via `bayesflow.diagnostics`: mu corr ~0.92, sigma corr ~0.87 (representative); means track the exact grid reference
-- [x] Calibration (SBC) — ECDF-based calibration error small for both (mu ~0.04, sigma ~0.07); sigma unbiased after `.constrain("sigma", lower=0)` (mean z ~0); mild residual sigma bias/underdispersion remains
+- [x] Calibration (SBC) — ECDF-based calibration error small for both (mu ~0.04, sigma ~0.07); `.constrain("sigma", lower=0)` flattens sigma's rank histogram (fixes the gross boundary bias), leaving only a mild residual positive bias (sigma mean z ≈ +0.15); mu unbiased (mean z ≈ −0.03)
 - [x] Sensitivity — posterior z-score vs. contraction (`bayesflow.diagnostics.z_score_contraction`); both parameters well-identified (contraction ~0.9) under these priors
+- [x] Reliability / out-of-distribution check — `reliability.py`, via BayesFlow's `summary_space_comparison` (MMD in summary space vs. a prior-predictive reference, bootstrap null) + `mmd_hypothesis_test` plot. In-distribution data sits at the null's scale; an OOD sample (mean far outside the prior) is flagged decisively (MMD ~50× larger, far beyond the null). Judged on MMD magnitude, since the bootstrap null is mildly anti-conservative
 - [x] Posterior predictive report — `posterior_predictive.py`, all diagnostics via **ArviZ** (`plot_ppc_dist` / `plot_ppc_tstat` / `plot_ppc_pit`); replicates re-simulated from the model's own `likelihood`. Well-specified passes (p-values all moderate); `--misspecify` (skewed observation) is caught by the skewness statistic (p ~0.009) while the fitted moments stay quiet — confirming the check has teeth
 
 ## Planned benchmarks (deferred)
@@ -43,7 +44,7 @@ Kept as a roadmap only — not yet in scope.
 
 | Benchmark | Status | Owner | Last checked | Notes |
 |---|---|---:|---:|---|
-| Toy reference model | Inference verified | TBD | TBD | 8/8 tests pass; recovers params (mu corr ~0.92, sigma ~0.87), matches exact grid posterior, mu & sigma calibrated via `bayesflow.diagnostics` (sigma needs constrain lower=0); posterior predictive report via ArviZ (passes; skew misfit caught) |
+| Toy reference model | Inference verified | TBD | TBD | 8/8 tests pass; recovers params (mu corr ~0.92, sigma ~0.87), matches exact grid posterior, mu & sigma calibrated via `bayesflow.diagnostics` (sigma needs constrain lower=0); reliability/OOD check via `summary_space_comparison` (OOD flagged ~50x); posterior predictive report via ArviZ (passes; skew misfit caught) |
 | Infectious disease time series | Deferred | TBD | — | Planned; first realistic example |
 | Spatial disease transmission | Deferred | TBD | — | Planned; requires human validation |
 | Evolutionary process | Deferred | TBD | — | Planned; requires human validation |

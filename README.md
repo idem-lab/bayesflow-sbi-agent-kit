@@ -78,6 +78,7 @@ flowchart TD
     S7 --> S8
 
     S3 -.->|implausible data| S2
+    S6 -.->|biased → retrain| S4
     S7 -.->|biased / miscalibrated → retrain| S4
     S8 -.->|real data out-of-distribution| S2
     S9 -.->|model misfits real data| S2

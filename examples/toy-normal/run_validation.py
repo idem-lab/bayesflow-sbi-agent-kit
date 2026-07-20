@@ -134,7 +134,7 @@ def _maybe_plot(estimates, targets) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Fuller training + inference check.")
-    parser.add_argument("--epochs", type=int, default=30)
+    parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--num-batches", type=int, default=50)
     parser.add_argument("--n-test", type=int, default=300)

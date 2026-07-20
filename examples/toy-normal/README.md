@@ -33,6 +33,7 @@ fixed-size embedding. This is the core BayesFlow capability the toy exercises.
 | `diagnostics.py` | NumPy + SciPy | **Reference posterior** on a (mu, sigma) grid — the bespoke, model-specific ground truth BayesFlow cannot provide. |
 | `train.py` | BayesFlow + backend | BayesFlow 2 adapter + DeepSet + CouplingFlow; trains and samples. |
 | `run_validation.py` | BayesFlow + backend | Fuller training run + inference checks: recovery, calibration and sensitivity via `bayesflow.diagnostics`, plus the grid cross-check. |
+| `reliability.py` | BayesFlow + backend | Reliability / out-of-distribution check (stage 8): flags whether data is typical under the training distribution, via BayesFlow's `summary_space_comparison` (MMD in summary space vs. a prior-predictive reference, bootstrap null) + `mmd_hypothesis_test` plot. Shows an in-distribution and an out-of-distribution sample. |
 | `posterior_predictive.py` | BayesFlow + backend + ArviZ | Posterior predictive check (stage 9): re-simulates replicated datasets from the model's own `likelihood` at posterior draws and compares them to an observation with **ArviZ** (`plot_ppc_dist`, `plot_ppc_tstat`, `plot_ppc_pit`). `--misspecify` shows the check catching a skewed misfit. |
 | `requirements.txt` | — | Pinned dependencies and backend selection. |
 
@@ -47,10 +48,13 @@ library can provide.
 
 ## What this covers in the workflow
 
-Prior-predictive simulation (`simulator.py`), a training smoke test and
-posterior-sampling smoke test (`train.py`), and the structure for parameter
-recovery and posterior-predictive checks against the grid reference
-(`diagnostics.py`). The grid reference is the payoff of using a toy: it gives a
+The engineering path of stages 4–9: prior-predictive draws (`simulator.py`), a
+training + posterior-sampling smoke test (`train.py`), parameter recovery, SBC and the
+z-score/contraction sensitivity diagnostic (`run_validation.py`), the reliability /
+out-of-distribution check (`reliability.py`, stage 8), and the posterior predictive
+check (`posterior_predictive.py`, stage 9). Recovery is additionally cross-checked
+against an exact **grid reference posterior** (`diagnostics.py`) — the payoff of using
+a toy: it gives a
 ground-truth posterior to validate the amortised BayesFlow posterior against —
 a check that is impossible for real models.
 
@@ -83,6 +87,7 @@ Training (needs the backend):
 KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/train.py --smoke   # tiny run
 KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/train.py           # fuller run
 KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/run_validation.py  # recovery/SBC/sensitivity
+KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/reliability.py     # reliability / OOD check (stage 8)
 KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/posterior_predictive.py             # posterior predictive check
 KERAS_BACKEND=jax .venv/bin/python examples/toy-normal/posterior_predictive.py --misspecify # ...catching a misfit
 ```
@@ -105,6 +110,15 @@ Verified end-to-end on Python 3.12 (BayesFlow 2.0.12, Keras 3.15, JAX backend):
     both are well-identified under these priors.
   - Grid cross-check: BayesFlow posterior means agree with the exact grid-reference
     posterior, near-perfectly for μ and well for σ (largest gaps at small N).
+- **`reliability.py` (30 epochs)** — the reliability / out-of-distribution check
+  (stage 8), via BayesFlow's `summary_space_comparison` (MMD in summary space vs. an
+  800-dataset prior-predictive reference). Representative run: an in-distribution
+  sample sits at the null's scale (MMD ≈ 0.05, ≈ 1× the null 95th pct → **typical,
+  trustworthy**), while an out-of-distribution sample (mean far outside the prior on μ)
+  is flagged decisively (MMD ≈ 2.5, ≈ 55× the null → **OOD, do not trust; route to
+  stage 2**) — a ~50× separation. Judged on MMD magnitude, because BayesFlow's
+  bootstrap null resamples the reference and is mildly anti-conservative (in-dist
+  p ≈ 0.04 despite being typical). Plots via `mmd_hypothesis_test` in `outputs/`.
 - **`posterior_predictive.py` (30 epochs, N=20 observation)** — the posterior
   predictive check (stage 9), all diagnostics via **ArviZ**. On the correctly
   specified model it passes: Bayesian p-values are all moderate (representative run —

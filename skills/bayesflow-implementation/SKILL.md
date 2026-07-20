@@ -70,8 +70,9 @@ example, `sigma` had strong recovery yet biased SBC until it was constrained.
 
 **Use BayesFlow's own diagnostics — do not hand-roll these metrics.** The
 `bayesflow.diagnostics` module takes `estimates` (a dict of posterior draws, shape
-`(datasets, samples, dim)`) and `targets` (a dict of true values) — exactly what
-`workflow.sample(...)` returns — and provides:
+`(datasets, samples, dim)`) and `targets` (a dict of true values). `estimates` is what
+`workflow.sample(...)` returns; you supply `targets` (the known true parameters) yourself,
+built alongside the draws (see `examples/toy-normal/run_validation.py`). It provides:
 
     import bayesflow.diagnostics as bfd
     bfd.metrics.root_mean_squared_error(estimates, targets)   # recovery
@@ -99,6 +100,12 @@ analytic posterior — the strongest possible check. Build such references from
 validated libraries (`scipy.stats`) rather than hand-coding densities, which is
 error-prone (easy to drop a normalising constant). The toy example's `diagnostics.py`
 is a worked instance.
+
+BayesFlow also has no **posterior predictive check** (its diagnostics are all
+parameter/summary-space). For stage 9, use **ArviZ** (`plot_ppc_dist`,
+`plot_ppc_tstat`, `plot_ppc_pit`) with replicates re-simulated from the model's own
+likelihood — see the `posterior-predictive-check` skill and the worked
+`examples/toy-normal/posterior_predictive.py`.
 
 ## Backend
 

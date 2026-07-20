@@ -165,7 +165,7 @@ Key moves that skill runs (do them here even without it):
 - Read **two** questions separately: *plausibility* (right magnitude/support, no
   absurdities) and *coverage* (does the simulated-data cloud span the real data?).
   Coverage matters uniquely in SBI: the prior is the training distribution, so a
-  too-narrow prior here is a stage-9 out-of-distribution failure caught early.
+  too-narrow prior here is a stage-8 out-of-distribution failure caught early.
 - **You show, the human judges.** You never decide plausibility — you choose the
   *presentation* and the human renders the verdict. Present in *their* terms, on the
   scales they can reason about (data, interpretable latent/derived quantities, or
@@ -326,8 +326,10 @@ signs off — or sends you back into the loop.
 - **Route out** to per-stage skills (`prior-elicitation`, `prior-predictive-check`,
   `parameter-recovery`, `calibration-sbc`, `real-data-reliability`,
   `posterior-predictive-check`) and to `bayesflow-implementation` for the engineering
-  mechanics. `examples/toy-normal/` is the end-to-end worked reference that this
-  workflow was validated against.
+  mechanics. `examples/toy-normal/` is the worked reference for the engineering path
+  this workflow was validated against — design → pilot training → recovery → SBC →
+  reliability/OOD → posterior predictive (stages 4–9). Intake, elicitation and the
+  human-judgement parts of stages 1–3 are not scripted (they are conversational).
 
 ## References
 
