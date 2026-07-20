@@ -122,8 +122,8 @@ split that governs the whole workflow.
   parameter. Run SBC on the same held-out simulated data and combine via the table
   above.
 - **On a clean pass:** both parameters informative-and-calibrated (or honestly wide
-  and calibrated) → proceed to **stage 8** (posterior predictive check), the first
-  check that involves the real data.
+  and calibrated) → proceed to **stage 8** (real-data inference + reliability/OOD
+  check), the first stage that involves the real data.
 - **Engineering mechanics** are in `bayesflow-implementation`; the worked reference is
   `examples/toy-normal/`.
 

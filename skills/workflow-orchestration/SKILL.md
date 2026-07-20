@@ -47,14 +47,17 @@ The **approval gates** below are hard stops: present findings, ask, and wait.
   5. Pilot training
   6. Parameter recovery .......──fail──> back to 4/5 (design/train) or, w/ approval, 2
   7. Calibration (SBC) ........──fail──> back to 4/5 (design/train)
-  8. Posterior predictive .....──fail──> back to 2 or the model [GATE]
-  9. Real-data inference +
+  8. Real-data inference +
      reliability (OOD) check ..──fail──> back to 2 (widen priors/sim range) [GATE]
+  9. Posterior predictive .....──fail──> back to 2 or the model [GATE]
  10. Human review ............ [GATE: human interprets & signs off]
 ```
 
-Stages 6–8 are the "does the method work?" block, run entirely on *simulated* data.
-Stage 9 is the first time real observations drive inference.
+Stages 4–7 (Act II) run entirely on *simulated* data — you prove the method works
+before the real data is ever used. Stage 8 is the first time the real observations
+drive inference, and it must certify the amortised posterior is trustworthy (in-
+distribution) *before* stage 9 (posterior predictive) checks the fitted model against
+those same observations.
 
 ## Orient the user, and keep a status ledger
 
@@ -67,10 +70,10 @@ overwhelming:
 
 - **Act I — set up the model & your beliefs** (stages 1–3: intake, priors, prior
   predictive)
-- **Act II — prove the method works on *simulated* data** (stages 4–8: design,
-  train, recovery, calibration, posterior predictive)
-- **Act III — use it on your *real* data & review** (stages 9–10: reliability check,
-  human review)
+- **Act II — prove the method works on *simulated* data** (stages 4–7: design,
+  train, recovery, calibration)
+- **Act III — use it on your *real* data & review** (stages 8–10: reliability check,
+  posterior predictive, human review)
 
 Say explicitly that **it is a loop** — "we will sometimes go back a step, and that
 is the workflow working, not failing" — and state the ground rules: you do the
@@ -137,7 +140,7 @@ Key moves that skill runs (do them here even without it):
 - **Commit to quantitative target summary statistics of the simulated data** — the
   acceptance criteria stage 3 will test, written down *before* the pushforward.
 - Remember the SBI-specific point: **the prior is the training distribution**, so
-  its pushforward must *cover* the plausible real data or stage 9 will be OOD. Flat
+  its pushforward must *cover* the plausible real data or stage 8 will be OOD. Flat
   priors are not an option.
 
 Record everything in `prior-specification.md` (template in
@@ -250,50 +253,58 @@ over/under-dispersion → usually more training. **Uniform ranks with poor stage
 point-recovery is *not* a fail** — it is the poorly-identified case, a scientific
 finding, not an engine bug.
 
-## 8. Posterior predictive check
-
-**Goal:** does the fitted model reproduce features of the **real** observed data?
-Draw parameters from the posterior given the real data, simulate new datasets from
-them, and compare to the observations (summaries, overlays). Systematic mismatch
-means the *model* is missing something real.
-
-**GATE + on fail:** a failing posterior predictive check is a *scientific* signal —
-the model is likely missing something real. Present it to the human and diagnose:
-which features of the data the model fails to reproduce, and which components
-(priors, likelihood, missing mechanism) are the plausible cause. The remedy —
-revising priors (**stage 2**) or the model itself — is the human's to reason about
-and decide. Do not silently retune priors or the model to make the check pass.
-
-## 9. Real-data inference + reliability (OOD) check
+## 8. Real-data inference + reliability (OOD) check
 
 **Goal:** run the actual observed data through the trained network **and check the
-amortised posterior is trustworthy for this data**. An amortised posterior is only
-reliable on data that resembles the training simulations; a real dataset unlike
-anything seen in training gives a confidently wrong answer with no error message.
+amortised posterior is trustworthy for this data**. Route to the
+`real-data-reliability` skill — it drives this stage. An amortised posterior is only
+reliable on data resembling the training simulations; a real dataset unlike anything
+seen in training is confidently wrong with no error message. This is the first stage
+that uses the real observations, and **it gates stage 9 (posterior predictive) and the
+human review** — do both only once it passes.
 
-**What to do:**
+Key moves that skill runs (do them here even without it):
 
-- Produce the posterior for the real observation(s) via `workflow.sample(...)`.
-- **Out-of-distribution check:** verify the real dataset is *typical* under the
-  training/prior-predictive distribution. A practical approach: compute the summary
-  network's embedding (or simple data summaries) for the real data and for a large
-  prior-predictive sample, and check the real data sits inside that cloud (e.g.
-  Mahalanobis distance vs. the simulated summaries, or eyeball low-dim projections).
-- If the real data is OOD, the posterior is **not** to be trusted as-is.
+- Produce the posterior via `workflow.sample(...)`, but **do not interpret it until
+  the OOD check passes.**
+- **OOD check:** verify the real data is *typical* under the training/prior-predictive
+  distribution — compute the summary embedding (or simple summaries) for the real data
+  and a large prior-predictive sample and check the real data sits **inside that
+  cloud** (Mahalanobis distance / low-dim projections / MMD). This is the stage-3
+  coverage question, now tested against the actual data.
+- Also check the posterior lands in a well-sampled region of parameter space, not out
+  on a tail the flow rarely saw.
 
-**On fail (real data is OOD):** this means the training distribution did not cover
-the real data — the priors or simulated data ranges are likely too narrow, or the
-model is misspecified. Route back to **stage 2**. Diagnose which is more likely
-(e.g. which summaries of the real data fall outside the simulated cloud, and which
-priors/mechanisms would need to move to cover them), and present it. Widening a
-prior or a simulator range is a *scientific* change the human must decide and
-approve — **GATE** — not something you do on your own to force the data in-
-distribution. Once they decide, you retrain. Optionally,
-importance-sampling reweighting of the amortised draws can rescue mild cases, and
-a likelihood-based fallback (e.g. MCMC seeded from the amortised draws) is the
-gold-standard escalation *when a likelihood is available* — but for many
-intractable-likelihood SBI problems it is not, which is why the OOD check matters
-so much here.
+**On fail (real data is OOD):** the training distribution did not cover the real data
+→ priors/simulator ranges too narrow, or the model is misspecified → back to
+**stage 2**. **GATE:** widening a prior or simulator range is the human's scientific
+call; then you retrain. Importance-sampling reweighting rescues *mild* cases, and an
+MCMC fallback is the gold standard *when a likelihood is available* — often it is not,
+which is why detecting the problem is the whole defence.
+
+## 9. Posterior predictive check
+
+**Goal:** does the fitted model, conditioned on the **real** data, reproduce the
+features of that data? Route to the `posterior-predictive-check` skill — it drives
+this stage. **Run it only after the reliability/OOD check (stage 8) has passed** — a
+posterior predictive check on an untrustworthy (OOD) posterior is uninterpretable.
+
+Key moves that skill runs (do them here even without it):
+
+- Draw from the **real-data posterior**, simulate replicated datasets, and compare
+  to the observations on the scales the human reasons about (their data view + derived
+  quantities) — using **targeted discrepancy measures, especially features the model
+  was *not* directly fit on** (dispersion, tails, extremes, zeros, autocorrelation).
+- Prefer graphical / per-feature checks to a single posterior predictive p-value
+  (which is conservative and not a calibrated p-value).
+- **SBI payoff:** with the engine already exonerated (recovery + SBC passed) and the
+  data in-distribution (stage 8), a systematic mismatch is **model misspecification**,
+  not an inference-network fault.
+
+**GATE + on fail:** a failing check is a *scientific* signal (the model is missing
+something). Diagnose which features fail and which component (priors, likelihood,
+missing mechanism) is the cause; present options. The remedy — revising priors
+(**stage 2**) or the model — is the human's to decide. Do not silently retune.
 
 ## 10. Human review
 
@@ -313,9 +324,10 @@ signs off — or sends you back into the loop.
   pending decisions) and continue; if a check has since failed, follow its
   back-arrow.
 - **Route out** to per-stage skills (`prior-elicitation`, `prior-predictive-check`,
-  `parameter-recovery`, `calibration-sbc`, …) as they become available, and to
-  `bayesflow-implementation` for the engineering mechanics. `examples/toy-normal/` is
-  the end-to-end worked reference that this workflow was validated against.
+  `parameter-recovery`, `calibration-sbc`, `real-data-reliability`,
+  `posterior-predictive-check`) and to `bayesflow-implementation` for the engineering
+  mechanics. `examples/toy-normal/` is the end-to-end worked reference that this
+  workflow was validated against.
 
 ## References
 
@@ -338,4 +350,4 @@ The workflow synthesises the following published sources; consult them for depth
   https://arxiv.org/abs/1804.06788
 - *Amortized Bayesian Workflow* (2024) — the amortised/SBI-specific additions:
   out-of-distribution detection at inference time, importance-sampling correction,
-  and MCMC fallback (stage 9). arXiv:2409.04332 — https://arxiv.org/abs/2409.04332
+  and MCMC fallback (stage 8). arXiv:2409.04332 — https://arxiv.org/abs/2409.04332

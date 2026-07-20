@@ -24,8 +24,8 @@ human-approval gates, and where each failed check routes back to.
  - pilot training
  - parameter recovery
  - simulation-based calibration
- - posterior predictive checks
  - real-data inference + reliability (out-of-distribution) check
+ - posterior predictive checks
  - human review
 
 At the start of a project, explain this whole workflow to the user in plain language

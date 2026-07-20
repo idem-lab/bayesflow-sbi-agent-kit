@@ -66,5 +66,5 @@ pushforward and carried into the prior predictive check.
   meaning of the summary (95% interval? min/max? ±1 SD?) confirmed with you, and the
   fitted distribution verified by simulation to reproduce those numbers._
 - **Coverage check:** _does the prior-predictive pushforward cover the plausible
-  range of the real data? (guards against out-of-distribution failure at stage 9.)_
+  range of the real data? (guards against out-of-distribution failure at stage 8.)_
 - **Parameters flagged as likely poorly identified:** _(forward-links stage 6.)_

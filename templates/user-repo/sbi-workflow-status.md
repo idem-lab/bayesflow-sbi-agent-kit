@@ -35,10 +35,10 @@ Legend:  ☐ not started · ▶ in progress · ✅ passed · ⚠ failed → loop
 - ☐ 5. Pilot training
 - ☐ 6. Parameter recovery
 - ☐ 7. Calibration (SBC)
-- ☐ 8. Posterior predictive check — **needs your approval for any model change**
 
 **Act III — use it on your *real* data & review**
-- ☐ 9. Real-data inference + reliability (out-of-distribution) check — **needs your approval to widen priors**
+- ☐ 8. Real-data inference + reliability (out-of-distribution) check — **needs your approval to widen priors**
+- ☐ 9. Posterior predictive check — **needs your approval for any model change**
 - ☐ 10. Human review — **you interpret the results and sign off**
 
 ---

@@ -29,7 +29,7 @@ check pass without the human's say-so.
 
 2. **In amortised SBI, the prior *is* the training distribution.** The network only
    learns to do inference over the region the prior samples. A too-narrow prior
-   guarantees the real data will be **out-of-distribution** at stage 9 (a
+   guarantees the real data will be **out-of-distribution** at stage 8 (a
    confidently wrong answer, with no error message); an absurdly wide/flat one
    wastes network capacity and can hurt calibration. So "does the prior's
    pushforward *cover* the plausible real data?" is a first-class design question

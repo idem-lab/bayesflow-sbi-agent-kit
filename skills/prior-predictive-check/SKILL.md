@@ -30,7 +30,7 @@ region the prior samples.
 2. **Coverage.** Does the prior predictive distribution *span* the plausible real
    data — does the real data sit comfortably inside the cloud of simulated data?
    *Too-narrow priors show up here, and this is the same failure that becomes an
-   out-of-distribution (OOD) disaster at stage 9 — a confidently wrong posterior
+   out-of-distribution (OOD) disaster at stage 8 — a confidently wrong posterior
    with no error message. Catching it now is far cheaper than catching it there.*
 
 These pull in opposite directions (widen for coverage, tighten for plausibility), so
@@ -165,7 +165,7 @@ busywork:
    value and spread against the committed central value and range.
 6. **Assess coverage explicitly.** Does the simulated cloud *contain* the plausible
    real data? If the real observations (or the human's description of them) sit at or
-   beyond its edge, that is a coverage failure now and an OOD failure at stage 9.
+   beyond its edge, that is a coverage failure now and an OOD failure at stage 8.
    Record the answer in the coverage-check row of `prior-specification.md`.
 7. **Record and route.** Update `sbi-workflow-status.md` (stage transition, any
    loop-back) and the coverage note in `prior-specification.md`. On pass, proceed to
@@ -197,7 +197,7 @@ Run through these against the simulated output — each maps to a common, concre
 | **No blow-ups** | `inf`, `NaN`, or astronomically large values | heavy-tailed prior with no bound; unstable dynamics for some prior draws |
 | **No degeneracy** | every dataset identical, or all-zero / all-constant | a mis-wired simulator, or a prior collapsed to a point |
 | **Runs cleanly** | crashes / hangs for some prior draws | simulator not robust across the full prior range (an engineering bug) |
-| **Coverage** | real data sits outside the simulated cloud | prior(s) too narrow → will be OOD at stage 9 |
+| **Coverage** | real data sits outside the simulated cloud | prior(s) too narrow → will be OOD at stage 8 |
 
 ## On fail: diagnose, don't fix the science
 
@@ -272,5 +272,5 @@ first stage that builds and trains a network.
   jointly, through the model, on the data scale. https://doi.org/10.3390/e19100555
 - *Amortized Bayesian Workflow* (2024) — the coverage/OOD linkage: the prior is the
   training distribution, so prior-predictive coverage now is what prevents
-  out-of-distribution failure at inference time (stage 9). arXiv:2409.04332 —
+  out-of-distribution failure at inference time (stage 8). arXiv:2409.04332 —
   https://arxiv.org/abs/2409.04332

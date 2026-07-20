@@ -41,6 +41,13 @@ help the user through) a specific part of the workflow. Current skills:
 - [`calibration-sbc`](skills/calibration-sbc/SKILL.md) — runs stage 7: simulation-based
   calibration, the width-aware check that catches bias and over/under-confidence
   recovery misses; read together with stage 6 via a combined decision table.
+- [`real-data-reliability`](skills/real-data-reliability/SKILL.md) — runs the real-data
+  inference + out-of-distribution check: an amortised posterior is only reliable on
+  data resembling the training simulations, so it verifies the real data is typical
+  before the posterior is trusted; gates the posterior predictive check and review.
+- [`posterior-predictive-check`](skills/posterior-predictive-check/SKILL.md) — checks
+  the fitted model reproduces the real data's features (targeted discrepancies,
+  especially ones not directly fit); a systematic mismatch is model misspecification.
 - [`bayesflow-implementation`](skills/bayesflow-implementation/SKILL.md) — practical,
   validated engineering tips for building BayesFlow 2 workflows (constraining
   parameters, summary networks for exchangeable data, verifying inference).
@@ -52,8 +59,8 @@ is the canonical definition of the principled Bayesian simulation-based inferenc
 workflow this kit promotes. It lays out the workflow as an explicit **loop, not a
 line** — a failed check sends you back to an earlier stage — across ten stages:
 project intake → prior review → prior predictive check → workflow design → pilot
-training → parameter recovery → calibration (SBC) → posterior predictive check →
-real-data inference + reliability (out-of-distribution) check → human review.
+training → parameter recovery → calibration (SBC) → real-data inference + reliability
+(out-of-distribution) check → posterior predictive check → human review.
 
 ```mermaid
 flowchart TD
@@ -61,19 +68,19 @@ flowchart TD
         S1["1 · Project intake"] --> S2["2 · Prior review 🔒"] --> S3["3 · Prior predictive check"]
     end
     subgraph ActII["Act II · prove the method works on simulated data"]
-        S4["4 · Workflow design"] --> S5["5 · Pilot training"] --> S6["6 · Parameter recovery"] --> S7["7 · Calibration #40;SBC#41;"] --> S8["8 · Posterior predictive 🔒"]
+        S4["4 · Workflow design"] --> S5["5 · Pilot training"] --> S6["6 · Parameter recovery"] --> S7["7 · Calibration #40;SBC#41;"]
     end
     subgraph ActIII["Act III · use it on your real data &amp; review"]
-        S9["9 · Reliability / out-of-distribution check 🔒"] --> S10["10 · Human review 🔒"]
+        S8["8 · Reliability / out-of-distribution check 🔒"] --> S9["9 · Posterior predictive 🔒"] --> S10["10 · Human review 🔒"]
     end
 
     S3 --> S4
-    S8 --> S9
+    S7 --> S8
 
     S3 -.->|implausible data| S2
     S7 -.->|biased / miscalibrated → retrain| S4
-    S8 -.->|model misfits real data| S2
-    S9 -.->|real data out-of-distribution| S2
+    S8 -.->|real data out-of-distribution| S2
+    S9 -.->|model misfits real data| S2
     S10 -.->|not fit for purpose| S2
 ```
 
