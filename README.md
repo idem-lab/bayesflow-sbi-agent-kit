@@ -30,6 +30,10 @@ help the user through) a specific part of the workflow. Current skills:
   priors (stage 2): triage each parameter by how much they know, elicit on the
   observable scale, and commit to quantitative summary-statistic targets that the
   prior predictive check then tests.
+- [`prior-predictive-check`](skills/prior-predictive-check/SKILL.md) — runs stage 3:
+  draw from the joint prior, push through the simulator, and test the simulated data
+  against those committed target summaries for both *plausibility* and *coverage*
+  (the SBI out-of-distribution guard) before any training.
 - [`bayesflow-implementation`](skills/bayesflow-implementation/SKILL.md) — practical,
   validated engineering tips for building BayesFlow 2 workflows (constraining
   parameters, summary networks for exchangeable data, verifying inference).

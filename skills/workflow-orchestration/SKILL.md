@@ -104,6 +104,14 @@ words: what process generates the data, what parameters they want to learn, what
 the observed data look like (shape, size, how many datasets), and what decision the
 inference will inform.
 
+Also capture two things now that stage 3 will need: **how the human conventionally
+looks at this kind of data** (the plot or summary they would use — reuse *their* view
+for the prior predictive check rather than inventing one), and **which quantities
+they can actually reason about** — the observable data, interpretable latent/derived
+quantities (e.g. noise-free predicted cases, R₀, a doubling time), or the parameters
+themselves. Users of very noisy-observation models often have their strongest
+intuition on the derived quantities, not the raw data.
+
 Write this down and read it back to the human. Do not infer a model mechanism they
 did not state. Flag intractable-likelihood situations early — that is exactly where
 amortised SBI earns its keep, and where MCMC alternatives may not be available.
@@ -139,24 +147,35 @@ Record everything in `prior-specification.md` (template in
 
 ## 3. Prior predictive check
 
-**Goal:** confirm the priors + simulator produce *plausible data* before any
-training. Draw parameters from the prior, push them through the simulator, and
-show the human summaries/plots of the simulated data.
+**Goal:** confirm the priors + simulator produce *plausible data*, and that the
+prior predictive *covers* the plausible real data, before any training. Route to the
+`prior-predictive-check` skill — it drives this stage. This is the cheapest check in
+the whole workflow and catches prior/model mistakes otherwise invisible until much
+later.
 
-**What you are looking for:** simulated datasets that look like the kind of data
-the human expects — right order of magnitude, right support, no absurdities
-(e.g. negative counts, impossible rates). Test against the **quantitative target
-summary statistics the human committed to at stage 2** (in `prior-specification.md`),
-not just an eyeball — those numbers are the pre-registered acceptance criteria. This
-is the cheapest check in the whole workflow and catches prior/model mistakes that are
-otherwise invisible until much later.
+Key moves that skill runs (do them here even without it):
 
-**On fail:** implausible simulated data → back to **stage 2**. Diagnose, do not fix
-the science: point to the likely cause (a prior that is too wide or on the wrong
-scale, an unconstrained parameter, a wrong distribution, or a bug in the simulator)
-and show the human the evidence. Whether the model is wrong and how to change it is
-their scientific decision — present options; do not edit the priors, model, or
-simulator yourself.
+- **Draw from the *joint* prior**, push through the simulator, and compute the
+  **quantitative target summary statistics the human committed to at stage 2** (in
+  `prior-specification.md`) — test against those pre-registered numbers, not an
+  eyeball.
+- Read **two** questions separately: *plausibility* (right magnitude/support, no
+  absurdities) and *coverage* (does the simulated-data cloud span the real data?).
+  Coverage matters uniquely in SBI: the prior is the training distribution, so a
+  too-narrow prior here is a stage-9 out-of-distribution failure caught early.
+- **You show, the human judges.** You never decide plausibility — you choose the
+  *presentation* and the human renders the verdict. Present in *their* terms, on the
+  scales they can reason about (data, interpretable latent/derived quantities, or
+  parameters), and pose it as recognition ("does any of this look wrong?") not recall
+  ("what did you expect?") — so a user who could not pre-state expectations can still
+  do this stage. Where committed targets are thin or missing, test what exists and
+  surface the rest exploratorily; do not dress post-hoc judgement up as pre-registered.
+- Distinguish a **simulator bug** (engineering — you may fix it, with the human's OK)
+  from a **wrong prior or mechanism** (science — the human decides).
+
+**On fail:** implausible data or insufficient coverage → back to **stage 2**.
+Diagnose, do not fix the science: point to the likely cause and show the evidence;
+present options and wait. Do not edit the priors, model, or simulator to force a pass.
 
 ## 4. Workflow design
 
@@ -314,7 +333,7 @@ signs off — or sends you back into the loop.
 - **Resuming:** read `sbi-workflow-status.md` to see where you are (stage, iteration,
   pending decisions) and continue; if a check has since failed, follow its
   back-arrow.
-- **Route out** to per-stage skills (`prior-elicitation`, prior-predictive,
+- **Route out** to per-stage skills (`prior-elicitation`, `prior-predictive-check`,
   calibration, …) as they become available, and to `bayesflow-implementation` for
   the engineering mechanics. `examples/toy-normal/` is the end-to-end worked
   reference that this workflow was validated against.
