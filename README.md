@@ -34,6 +34,13 @@ help the user through) a specific part of the workflow. Current skills:
   draw from the joint prior, push through the simulator, and test the simulated data
   against those committed target summaries for both *plausibility* and *coverage*
   (the SBI out-of-distribution guard) before any training.
+- [`parameter-recovery`](skills/parameter-recovery/SKILL.md) — runs stage 6: on
+  held-out *simulated* data, checks the posterior recovers the truth *relative to its
+  own uncertainty* (contraction + z-score sensitivity plot), separating a
+  poorly-identified parameter (a finding) from a biased engine (a fix).
+- [`calibration-sbc`](skills/calibration-sbc/SKILL.md) — runs stage 7: simulation-based
+  calibration, the width-aware check that catches bias and over/under-confidence
+  recovery misses; read together with stage 6 via a combined decision table.
 - [`bayesflow-implementation`](skills/bayesflow-implementation/SKILL.md) — practical,
   validated engineering tips for building BayesFlow 2 workflows (constraining
   parameters, summary networks for exchangeable data, verifying inference).

@@ -203,73 +203,52 @@ Only scale up epochs / network size once the pilot runs clean.
 ## 6. Parameter recovery
 
 **Goal:** on held-out *simulated* datasets, does the posterior recover the true
-parameters — **judged relative to its own uncertainty**, never in absolute terms?
+parameters — **judged relative to its own uncertainty**, never as point accuracy?
+Route to the `parameter-recovery` skill — it drives this stage. Runs on simulated
+data only; read together with SBC (stage 7).
 
-**Do not read recovery as point accuracy.** Correlation and RMSE of the posterior
-*mean* vs. truth are **width-blind**. When the data are genuinely uninformative
-about a parameter, the posterior correctly collapses back onto the prior, the mean
-barely tracks the truth, and these metrics look "broken" even though the inference
-is flawless — a wide-but-honest posterior is a *correct* result, not a failure.
-This is exactly why point-recovery alone **cannot** tell a poorly-identified
-parameter apart from a biased inference engine: both show low correlation. To
-separate them, report, per parameter:
+Key moves that skill runs (do them here even without it):
 
-- **posterior contraction** = 1 − Var_post / Var_prior. ≈ 0 means the data added
-  almost nothing (posterior ≈ prior); ≈ 1 means the parameter is pinned down.
-- **posterior z-score** = (posterior mean − true value) / posterior sd — a
-  *standardised* error (≈ N(0, 1) if calibrated). Small |z| means the posterior is
-  consistent with the truth *given its own width*.
+- **Do not read recovery as point accuracy.** Correlation / RMSE of the posterior
+  *mean* are **width-blind**: an uninformative parameter's posterior correctly
+  collapses to the prior, so those metrics look "broken" while inference is flawless.
+  Both a poorly-identified parameter and a biased engine show low correlation — point
+  metrics alone cannot tell them apart.
+- Report, per parameter, **posterior contraction** (1 − Var_post/Var_prior) and
+  **posterior z-score** ((mean − truth)/sd), and read the **z-score-vs-contraction
+  sensitivity plot** (quadrants: small |z| + low contraction = poorly identified but
+  benign; small |z| + high contraction = ideal; large |z| = biased / conflict).
+- **Necessary but not sufficient:** always continue to SBC (stage 7) and reach the
+  verdict from the two together.
 
-Plot z-score against contraction (the "sensitivity" plot). Its four quadrants are
-named and tell you *which* regime you are in:
-
-| | low contraction | high contraction |
-|---|---|---|
-| **small \|z\|** | parameter **poorly identified** (benign) | ideal |
-| **large \|z\|** | prior–likelihood conflict | overfitting to noise |
-
-**Necessary but not sufficient** — recovery still cannot certify calibration on its
-own; always continue to SBC (stage 7) and read the two **together**.
-
-**On fail — decide *which* failure it is before acting:**
-
-- Poor point-recovery **but** small |z| **and** (stage 7) **uniform SBC** → the
-  inference is correct and the parameter is genuinely **poorly identified** by the
-  data. This is a *scientific / identifiability finding*, not an engine bug: surface
-  it to the human; **do not** retrain to try to "improve" it (you can't — the data
-  are uninformative).
-- **Large |z| and/or non-uniform SBC** → a real inference problem (bias / wrong
-  width) → back to **stage 4/5** (constrain a parameter, train longer, larger flow,
-  better summary network).
-- Low contraction **with large |z|** → **prior–likelihood conflict**: the prior and
-  the data disagree. That is a *scientific* signal → diagnose and surface to the
-  human (stage 2); do not silently move the prior.
-
-The z-score / contraction diagnostic and its quadrant interpretation are from Schad,
-Betancourt & Vasishth (2021); recovery-relative-to-uncertainty is stressed by Gelman
-et al. (2020). See **References**.
+**On fail — decide *which* failure it is first:** poorly identified (small |z|,
+uniform SBC) is a *scientific finding* → surface, **do not retrain**; large |z| /
+non-uniform SBC is an *engineering* problem → **stage 4/5**; low contraction with
+large |z| is *prior–likelihood conflict* → *scientific*, **stage 2**.
 
 ## 7. Calibration — simulation-based calibration (SBC)
 
-**Goal:** are the posteriors *calibrated*, not just accurate on average? Run SBC:
-for many simulated datasets, compute the rank of each true value within its
-posterior draws; the ranks should be ~uniform. A ∩ or ∪ shape means over/under-
-confidence; a slope means bias.
+**Goal:** are the posteriors *calibrated*, not just accurate on average? Route to the
+`calibration-sbc` skill — it drives this stage. Runs on simulated data only; read
+together with recovery (stage 6).
 
-This is the check that catches problems recovery misses — in the toy example
-`sigma` had strong recovery yet biased SBC until it was constrained. Crucially, SBC
-is **width-aware**: uniform ranks certify that a *wide* posterior is nonetheless
-honest, while non-uniform ranks flag bias regardless of width. That is precisely
-what separates a genuinely poorly-identified parameter (stage 6, small |z|) from a
-broken engine (biased) — so always read SBC together with the stage-6 sensitivity
-plot. Where the problem is low-dimensional, also **cross-check against an exact
-reference** (grid or analytic posterior) built from validated libraries
-(`scipy.stats`), not hand-coded densities.
+Key moves that skill runs (do them here even without it):
 
-**On fail:** biased ranks → back to **stage 4** (e.g. add a constraint) or **5**
-(train more). Overdispersion/underdispersion → usually more training / larger flow.
-Note: uniform ranks with *poor* stage-6 point-recovery is **not** a fail — it is the
-poorly-identified case above, and a scientific finding, not an engine bug.
+- Run SBC: for many simulated datasets, the **rank** of each true value within its
+  posterior draws should be ~**uniform**. ∩/∪ = over/under-confidence; a slope = bias.
+- SBC is **width-aware** — this is what catches problems recovery misses (in the toy,
+  `sigma` had strong recovery yet biased SBC until constrained) and what separates a
+  genuinely poorly-identified parameter (uniform ranks) from a biased engine
+  (non-uniform), so **read it with the stage-6 sensitivity plot** via the combined
+  decision table in that skill.
+- The commonest concrete fix is **constraining a bounded parameter**
+  (`adapter.constrain("sigma", lower=0)`). Where low-dimensional, also cross-check an
+  exact grid/analytic reference (`scipy.stats`, not hand-coded).
+
+**On fail:** biased ranks → **stage 4** (add a constraint) or **5** (train more);
+over/under-dispersion → usually more training. **Uniform ranks with poor stage-6
+point-recovery is *not* a fail** — it is the poorly-identified case, a scientific
+finding, not an engine bug.
 
 ## 8. Posterior predictive check
 
@@ -334,9 +313,9 @@ signs off — or sends you back into the loop.
   pending decisions) and continue; if a check has since failed, follow its
   back-arrow.
 - **Route out** to per-stage skills (`prior-elicitation`, `prior-predictive-check`,
-  calibration, …) as they become available, and to `bayesflow-implementation` for
-  the engineering mechanics. `examples/toy-normal/` is the end-to-end worked
-  reference that this workflow was validated against.
+  `parameter-recovery`, `calibration-sbc`, …) as they become available, and to
+  `bayesflow-implementation` for the engineering mechanics. `examples/toy-normal/` is
+  the end-to-end worked reference that this workflow was validated against.
 
 ## References
 
