@@ -87,13 +87,21 @@ hard approval gate. **Diagnose, do not fix the science:**
 On a clean pass, the model reproduces the real data on the features that matter →
 proceed to **human review** with the fit evidence in hand.
 
-## Note on repo status
+## Worked reference and tooling
 
-There is not yet a worked, tested posterior-predictive report in the kit
-(`validation/benchmark-matrix.md` lists it as the toy example's one remaining
-unchecked item). Until there is, generate replicates directly from the model's
-`likelihood`/simulator at posterior draws (see `examples/toy-normal/simulator.py`), and
-keep discrepancy measures simple and validated (`scipy.stats`, not hand-coded).
+`examples/toy-normal/posterior_predictive.py` is the worked, tested reference. It shows
+the whole pattern: re-simulate replicated datasets from the model's **own** `likelihood`
+at posterior draws, then run every diagnostic through **ArviZ** — `plot_ppc_dist` (the
+observed-vs-replicated overlay), `plot_ppc_tstat` (Bayesian p-value for a test statistic),
+and `plot_ppc_pit` (a PIT calibration check). ArviZ is the standard, validated
+Bayesian-workflow diagnostics package; do not reimplement these plots or p-values.
+
+The reference also demonstrates the **choose-the-right-statistic** point above: its
+`--misspecify` mode makes the observation skewed, and only a statistic that *targets*
+asymmetry (skewness) catches it — `mean`/`std` (the fitted moments) and even generic
+`min`/`max`/`iqr` stay quiet. Pick discrepancy measures for the failure modes you care
+about, and build any you compute yourself from validated libraries (`scipy.stats`), never
+hand-coded densities.
 
 ## Using this skill
 

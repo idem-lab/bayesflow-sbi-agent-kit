@@ -32,6 +32,14 @@ try:
 except ImportError:
     HAVE_DIAG = False
 
+# posterior_predictive.py needs SciPy (and, for plots, ArviZ); guard so the simulator
+# tests still run without them. These tests exercise only its backend-free p-value logic.
+try:
+    import posterior_predictive as ppc   # noqa: E402
+    HAVE_PPC = True
+except Exception:
+    HAVE_PPC = False
+
 
 class _Skip(Exception):
     """Raised to skip a test when an optional dependency is missing."""
@@ -44,6 +52,25 @@ def _skip_if_no_diag():
             pytest.skip("diagnostics.py requires scipy")
         except ImportError:
             raise _Skip("scipy not installed")
+
+
+def _skip_if_no_ppc():
+    if not HAVE_PPC:
+        try:
+            import pytest
+            pytest.skip("posterior_predictive requires scipy")
+        except ImportError:
+            raise _Skip("posterior_predictive dependencies missing")
+
+
+def _normal_replicates(x_obs, n_samples, seed):
+    """Synthetic posterior + replicated datasets for a Normal fit to ``x_obs``, with no
+    training or backend — enough to exercise the posterior-predictive p-value logic."""
+    rng = np.random.default_rng(seed)
+    N = x_obs.shape[0]
+    mu = rng.normal(x_obs.mean(), x_obs.std() / np.sqrt(N), size=n_samples)
+    sigma = x_obs.std() * np.sqrt((N - 1) / rng.chisquare(N - 1, size=n_samples))
+    return rng.normal(mu[:, None], sigma[:, None], size=(n_samples, N))
 
 
 def test_prior_ranges_and_moments():
@@ -110,6 +137,32 @@ def test_reference_posterior_recovers_parameters():
     ref = diag.reference_posterior(x)
     assert abs(ref["mu_mean"] - true_mu) < 0.4
     assert abs(ref["sigma_mean"] - true_sigma) < 0.4
+
+
+def test_ppc_pvalues_well_specified_are_moderate():
+    # A Normal fit to Normal data: every posterior predictive p-value should be moderate.
+    _skip_if_no_ppc()
+    rng = np.random.default_rng(0)
+    x_obs = rng.normal(1.79, 0.44, size=20)
+    y_rep = _normal_replicates(x_obs, 2000, seed=1)
+    pvals = ppc.p_value_table(y_rep, x_obs)
+    for name, val in pvals.items():
+        assert 0.02 < val < 0.98, f"{name} p-value unexpectedly extreme: {val}"
+
+
+def test_ppc_skew_flags_shape_not_moments():
+    # A skewed observation (exponential, matched mean & sd): a Normal fit reproduces the
+    # mean and sd but NOT the skew, so only the skewness statistic should be extreme. This
+    # is the property that makes the check meaningful — it can catch a misfit.
+    _skip_if_no_ppc()
+    rng = np.random.default_rng(20)
+    z = rng.exponential(1.0, size=40) - 1.0        # mean 0, sd 1, skewness 2
+    x_obs = 1.79 + 0.44 * z
+    y_rep = _normal_replicates(x_obs, 4000, seed=21)
+    pvals = ppc.p_value_table(y_rep, x_obs)
+    assert 0.05 < pvals["mean"] < 0.95, f"mean should not flag: {pvals}"
+    assert 0.05 < pvals["std"] < 0.95, f"std should not flag: {pvals}"
+    assert pvals["skew"] < 0.05, f"skewness should flag the misfit: {pvals}"
 
 
 def _run_all():
