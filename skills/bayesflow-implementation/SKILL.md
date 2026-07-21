@@ -44,6 +44,61 @@ network:
 DeepSet maps any number of observations to a fixed-size embedding, so the number
 of observations N can differ between datasets.
 
+## Ordered time series → TimeSeriesNetwork / TimeSeriesTransformer
+
+When each dataset is an *ordered* sequence (not an exchangeable set), summarise it
+with a sequence network, which reduces any length-T series to a fixed embedding:
+
+    adapter.as_time_series("y").rename("y", "summary_variables")
+    summary_network = bf.networks.TimeSeriesNetwork(summary_dim=48)   # LSTNet: GRU + skip-convs
+    # or bf.networks.TimeSeriesTransformer(summary_dim=48, time_axis=1)  # attention, accepts attention_mask
+
+**Variable observed length / forecasting-from-partial-data.** There is no automatic
+ragged batching. Pad every series to `T_max` and add a **mask channel** that is 1 on
+observed weeks and 0 on padding; concatenate `[value, mask]` into a 2-channel
+`summary_variables` and randomise the observed length per batch at training time. One
+estimator then serves every observed length (e.g. every monthly forecast cutoff). The
+flu example does exactly this (`examples/flu-sir/train.py`, `simulator.observed_and_mask`).
+
+## Latent states / hierarchical models → infer them, don't bolt on another sampler
+
+The single most important scope rule for these models: **latent states and per-unit
+parameters are inference targets of the *same* amortised posterior — not something a
+separate MCMC / particle filter / custom sampler reconstructs afterwards.** Nesting a
+hand-built sampler inside the SBI defeats the purpose of amortisation and is a
+scientific-method change that needs explicit human sign-off (see `workflow-orchestration`
+stage 4). Two supported patterns, both pure BayesFlow:
+
+- **Latent trajectory as a target.** Concatenate the latent path (e.g. weekly
+  log-infections `i₁..i_T`) *with* the globals into `inference_variables`, conditioned on
+  the observed series. A `CouplingFlow` (or `FlowMatching` / `DiffusionModel` for a
+  higher-dim target) then returns joint posterior draws of `[θ, latent path]`; forecasts
+  are the reporting/observation pushforward of the posterior *future* latent states — a
+  prediction step, still no second inference method. Validate with **per-step SBC** on the
+  trajectory, not just the globals. Worked in `examples/flu-sir/`.
+  *If the full-trajectory target won't calibrate* (per-step SBC fails on the far-ahead
+  steps because the target is too high-dimensional), fall back to inferring only a
+  **fixed-dim boundary state** `[θ, state at the last observed step]` and forecast by
+  **forward-simulating the model** from those SBI-inferred boundary draws. That is still
+  pure SBI — forward simulation from posterior draws is prediction, not a second inference
+  method — it just trades the in-sample latent reconstruction for a lower-dimensional,
+  more robust target.
+- **Grouped / hierarchical parameters.** `bf.simulators.HierarchicalSimulator([global_sim,
+  local_sim])` draws exchangeable global→local levels (`.sample((D, G))` → globals `(D,·)`,
+  locals `(D, G, ·)`); the inner sim receives the outer draws by keyword. Use it to pool
+  across exchangeable units (states, sites) sharing hyperpriors.
+
+**Composition (`compositional_sample`) is for i.i.d. units only.** `DiffusionModel`'s
+`compositional_score` + `CompositionalApproximator.compositional_sample` combine evidence
+across **exchangeable** groups (score `(1−n)(1−t)∇log p(θ) + Σᵢ s(θ,t,yᵢ)`). That sum is
+correct for conditionally-i.i.d. datasets but **wrong for a Markov temporal chain** (it has
+no transition term) — don't reach for it to "stitch" a time series. There is **no
+Simformer / arbitrary-subset conditioning** in BayesFlow 2.0.12 (`bf.experimental` is only
+`FreeFormFlow`), so "condition on the past, sample the future in one masked network" is not
+available; use the latent-trajectory-target pattern above instead. See the BayesFlow
+Compositional Diffusion example, and `examples/flu-sir/` (with `ENGINEERING_LOG.md` §3) as
+the worked case.
+
 ## Adapter hygiene
 
 - Call `.to_array()` before `.convert_dtype(...)`. Raw simulator outputs may

@@ -147,11 +147,11 @@ hand-built sampler is a change of inference *method* (a scientific/scope decisio
 engineering detail. Research against the BayesFlow 2.0.12 source confirmed the pure route is
 available and correct (latent trajectory as a target; `HierarchicalSimulator` for grouped
 params; composition is exchangeable-only, not for Markov chains; no Simformer/arbitrary-
-subset conditioning) — see `SBI_REDESIGN_PLAN.md`. The particle filter was removed and the
-model reimplemented as above. **Guardrail added** so future workflow agents don't repeat the
-mistake: `skills/bayesflow-implementation` (latent-states section) and
-`skills/workflow-orchestration` (stage 4 "stays inside BayesFlow"; the inference method is
-not an engineering knob).
+subset conditioning — these conclusions are written up in the `bayesflow-implementation`
+skill's latent-states section). The particle filter was removed and the model reimplemented
+as above. **Guardrail added** so future workflow agents don't repeat the mistake:
+`skills/bayesflow-implementation` (latent-states section) and `skills/workflow-orchestration`
+(stage 4 "stays inside BayesFlow"; the inference method is not an engineering knob).
 
 ---
 
@@ -285,8 +285,8 @@ The single most important stage, and the workflow earned its keep here.
 The maintainer flagged two things about the first build (Iterations 1–6): it modelled only a
 16-week slice, not the full CDC forecasting season; and it used a **hybrid SBI + particle
 filter**, which undermines the toolkit's purpose (exercising *pure* amortised SBI for
-latent-state / hierarchical models). Both are addressed here; see §3 for the design and
-`SBI_REDESIGN_PLAN.md` for the research behind it.
+latent-state / hierarchical models). Both are addressed here; see §3 for the design and the
+`bayesflow-implementation` skill (latent-states section) for the BayesFlow research behind it.
 
 - **Full season.** Window widened to **39 weeks (~1 Oct → ~30 Jun)**; all 51 states have
   exactly 39 weekly reports every season. Forecasts issued at monthly cutoffs

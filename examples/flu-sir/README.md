@@ -52,7 +52,7 @@ This answers the brief's "one simulation, or a separate forward step?" — **one
 the whole season; the future weeks are part of the inference target.** An earlier build
 used a hybrid amortised-globals + particle-filter factorisation; it was replaced with pure
 SBI because the point of this example is to exercise BayesFlow's own machinery for
-latent-state / hierarchical inference. See `ENGINEERING_LOG.md` §3 and `SBI_REDESIGN_PLAN.md`.
+latent-state / hierarchical inference. See `ENGINEERING_LOG.md` §3.
 
 ## Files
 

@@ -35,6 +35,17 @@ wrong, and *how* to change it, is a scientific judgement that belongs to the hum
 they are the one who should reason about why the model might be misspecified and
 decide the fix. Do not edit the model or simulator yourself to make a check pass.
 
+**The inference method is not one of the engineering knobs you own.** This kit's
+method *is* amortised SBI in BayesFlow — that is the whole point. "Owning the
+engineering" means adapters, networks, training, and diagnostics *within* that method;
+it does **not** include swapping in a different inference engine (MCMC, a particle
+filter, ABC, a bespoke sampler) or nesting one inside the SBI. Latent states,
+hierarchical structure, and time series all stay inside BayesFlow (see the
+`bayesflow-implementation` skill for how). If you become convinced the problem genuinely
+needs a different or hybrid method, that is a **scientific/scope decision**: stop,
+present the case and the trade-offs, and get explicit human sign-off — do not just build
+it.
+
 The **approval gates** below are hard stops: present findings, ask, and wait.
 
 ## Stages at a glance
@@ -123,6 +134,22 @@ amortised SBI earns its keep, and where MCMC alternatives may not be available.
 will fit **many datasets** (train once, reuse). For a single one-off fit, the
 upfront training cost may not be justified — say so, and let the human decide.
 
+> **Future direction (out of scope for now): a "suggest an inference method" step.**
+> This kit assumes amortised SBI is the right tool and stays inside it. A planned
+> addition is an explicit step that, at this stage, weighs SBI against alternatives
+> (MCMC/HMC, sequential/neural-sequential SBI, particle MCMC, ABC, variational
+> inference) — including for the model *extensions* the human is likely to want. Some
+> extensions break specific methods: e.g. a particle filter's likelihood factorisation
+> assumes a Markov latent chain and breaks for a non-Markovian agent-based model or a
+> joint metapopulation coupling all states at once, whereas amortised SBI over the joint
+> trajectory does not. Such a step should (a) give each alternative's advantages/limits
+> vs SBI, for the current model and its likely extensions; (b) recommend **robust,
+> validated packages** (e.g. Stan/PyMC/NumPyro, `sbi`, `particles`, `pyABC`), never
+> bespoke sampler code; and (c) explain how choosing it changes the rest of the
+> workflow. Until that step exists, treat a method change as a human-approved scope
+> decision (see "The human is the scientist"). Do not build a substitute method
+> yourself.
+
 ## 2. Prior review
 
 **Goal:** agree priors that encode the human's domain knowledge. Route to the
@@ -190,9 +217,18 @@ that will bite you if skipped:
 - **Constrain positive / bounded parameters** (`adapter.constrain("sigma", lower=0)`),
   or calibration will be biased at the boundary.
 - **Exchangeable / variable-length observations** → `as_set` + a `DeepSet` summary
-  network.
+  network. **Ordered time series** → `as_time_series` + `TimeSeriesNetwork` /
+  `TimeSeriesTransformer`; pad + mask for variable observed length.
 - **Adapter hygiene** — `to_array` before `convert_dtype`; `drop` unused meta
   variables.
+- **Latent states, hierarchical structure, and time series stay inside BayesFlow.**
+  Infer latent trajectories / per-unit parameters as *targets* of the same amortised
+  posterior (concatenate them into `inference_variables`); use `HierarchicalSimulator`
+  for grouped parameters and `compositional_sample` only for exchangeable pooling. Do
+  **not** substitute or nest a hand-built MCMC / particle filter / custom sampler as the
+  inference engine — that is a scientific/scope change needing human sign-off, not a
+  design detail (see "The human is the scientist" and the `bayesflow-implementation`
+  skill's latent-states section; worked in `examples/flu-sir/`).
 
 ## 5. Pilot training
 
@@ -278,9 +314,12 @@ Key moves that skill runs (do them here even without it):
 **On fail (real data is OOD):** the training distribution did not cover the real data
 → priors/simulator ranges too narrow, or the model is misspecified → back to
 **stage 2**. **GATE:** widening a prior or simulator range is the human's scientific
-call; then you retrain. Importance-sampling reweighting rescues *mild* cases, and an
-MCMC fallback is the gold standard *when a likelihood is available* — often it is not,
-which is why detecting the problem is the whole defence.
+call; then you retrain. Importance-sampling reweighting rescues *mild* cases. A
+likelihood-based MCMC fallback can be accurate *when a likelihood is available* — but
+it is a **last-resort, human-approved escalation, not a default**: for the
+intractable-likelihood models this kit targets it usually is not available (which is why
+detecting the problem is the whole defence), and reaching for it is a method/scope change
+(see "The human is the scientist"), not something you switch to on your own.
 
 ## 9. Posterior predictive check
 

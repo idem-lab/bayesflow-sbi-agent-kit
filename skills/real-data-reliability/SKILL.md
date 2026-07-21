@@ -71,11 +71,13 @@ in-distribution:
 - **Importance-sampling reweighting** of the amortised draws can rescue *mild* OOD
   cases by correcting the amortised posterior toward the true one — but it needs a
   usable importance weight and degrades as the mismatch grows.
-- A **likelihood-based fallback** — e.g. MCMC seeded from the amortised draws — is the
-  gold-standard escalation *when a likelihood is available*. For many
-  intractable-likelihood SBI problems it is **not**, which is exactly why the OOD check
-  carries so much weight here: often there is no cheap second opinion, so detecting the
-  problem is the whole defence.
+- A **likelihood-based fallback** — e.g. MCMC seeded from the amortised draws — can be
+  an accurate escalation *when a likelihood is available*, but treat it as a
+  **last-resort, human-approved** step, not a default: for many intractable-likelihood
+  SBI problems it is **not** available, which is exactly why the OOD check carries so much
+  weight here (often there is no cheap second opinion, so detecting the problem is the
+  whole defence). Switching inference method is a scientific/scope decision — present it
+  and get sign-off; don't build it unprompted.
 
 These rescues are engineering, but the underlying question — is the model/prior wide
 enough or right? — is science, and the retrain-after-widening path goes through the
