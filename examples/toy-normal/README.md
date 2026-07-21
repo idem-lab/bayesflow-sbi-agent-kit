@@ -33,7 +33,7 @@ fixed-size embedding. This is the core BayesFlow capability the toy exercises.
 | `diagnostics.py` | NumPy + SciPy | **Reference posterior** on a (mu, sigma) grid — the bespoke, model-specific ground truth BayesFlow cannot provide. |
 | `train.py` | BayesFlow + backend | BayesFlow 2 adapter + DeepSet + CouplingFlow; trains and samples. |
 | `run_validation.py` | BayesFlow + backend | Fuller training run + inference checks: recovery, calibration and sensitivity via `bayesflow.diagnostics`, plus the grid cross-check. |
-| `reliability.py` | BayesFlow + backend | Reliability / out-of-distribution check (stage 8): flags whether data is typical under the training distribution, via BayesFlow's `summary_space_comparison` (MMD in summary space vs. a prior-predictive reference, bootstrap null) + `mmd_hypothesis_test` plot. Shows an in-distribution and an out-of-distribution sample. |
+| `reliability.py` | BayesFlow + backend | Reliability / out-of-distribution check (stage 8): flags whether data is typical under the training distribution, via summary-space MMD (BayesFlow `maximum_mean_discrepancy` + `approximator.summarize`) against a prior-predictive reference with a simulator-calibrated null, plus a `mmd_hypothesis_test` plot. Shows an in-distribution and an out-of-distribution sample. |
 | `posterior_predictive.py` | BayesFlow + backend + ArviZ | Posterior predictive check (stage 9): re-simulates replicated datasets from the model's own `likelihood` at posterior draws and compares them to an observation with **ArviZ** (`plot_ppc_dist`, `plot_ppc_tstat`, `plot_ppc_pit`). `--misspecify` shows the check catching a skewed misfit. |
 | `requirements.txt` | — | Pinned dependencies and backend selection. |
 
@@ -111,14 +111,16 @@ Verified end-to-end on Python 3.12 (BayesFlow 2.0.12, Keras 3.15, JAX backend):
   - Grid cross-check: BayesFlow posterior means agree with the exact grid-reference
     posterior, near-perfectly for μ and well for σ (largest gaps at small N).
 - **`reliability.py` (30 epochs)** — the reliability / out-of-distribution check
-  (stage 8), via BayesFlow's `summary_space_comparison` (MMD in summary space vs. an
-  800-dataset prior-predictive reference). Representative run: an in-distribution
-  sample sits at the null's scale (MMD ≈ 0.05, ≈ 1× the null 95th pct → **typical,
+  (stage 8): summary-space MMD (BayesFlow's `maximum_mean_discrepancy` on
+  `approximator.summarize` embeddings) against an 800-dataset prior-predictive
+  reference, with a **simulator-calibrated** null (200 fresh in-distribution draws).
+  Representative run: an in-distribution sample is typical (MMD ≈ 0.05, **p ≈ 0.59 →
   trustworthy**), while an out-of-distribution sample (mean far outside the prior on μ)
-  is flagged decisively (MMD ≈ 2.5, ≈ 55× the null → **OOD, do not trust; route to
-  stage 2**) — a ~50× separation. Judged on MMD magnitude, because BayesFlow's
-  bootstrap null resamples the reference and is mildly anti-conservative (in-dist
-  p ≈ 0.04 despite being typical). Plots via `mmd_hypothesis_test` in `outputs/`.
+  is flagged decisively (MMD ≈ 2.6, **p = 0 → OOD, do not trust; route to stage 2**) —
+  a ~50× separation. The simulator-based null is calibrated — a real in-distribution
+  observation is just another prior-predictive draw — unlike BayesFlow's built-in
+  `summary_space_comparison` bootstrap, which resamples the reference and is mildly
+  anti-conservative. Plots via `mmd_hypothesis_test` in `outputs/`.
 - **`posterior_predictive.py` (30 epochs, N=20 observation)** — the posterior
   predictive check (stage 9), all diagnostics via **ArviZ**. On the correctly
   specified model it passes: Bayesian p-values are all moderate (representative run —

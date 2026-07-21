@@ -108,9 +108,11 @@ interpreting the posterior predictive check and the human review** — an untrus
   widen-and-retrain decision is the human's, through the gate.
 - **Engineering mechanics** (`workflow.sample`, summary embeddings) are in
   `bayesflow-implementation`. The worked reference is
-  `examples/toy-normal/reliability.py`, which runs exactly this check — BayesFlow's
-  `summary_space_comparison` (MMD in summary space vs. a prior-predictive reference,
-  with a bootstrap null) on an in-distribution and an out-of-distribution sample.
+  `examples/toy-normal/reliability.py`, which runs exactly this check — MMD in the
+  summary-network space (BayesFlow's `maximum_mean_discrepancy` on
+  `approximator.summarize` embeddings) against a prior-predictive reference, with a
+  **simulator-calibrated** null (fresh in-distribution draws, not a resample of the
+  reference) — on an in-distribution and an out-of-distribution sample.
 
 ## References
 
