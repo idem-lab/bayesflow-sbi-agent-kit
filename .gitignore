@@ -23,6 +23,7 @@ venv/
 htmlcov/
 dist/
 build/
+data/
 
 # Example run outputs (plots, saved models)
 outputs/

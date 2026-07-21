@@ -1,0 +1,26 @@
+# Dependencies for the influenza SIR forecasting example.
+#
+# Same isolated Python 3.11/3.12 + Keras-backend setup as examples/toy-normal.
+# Select the backend with KERAS_BACKEND (jax / tensorflow / torch), e.g.:
+#     KERAS_BACKEND=jax .venv/bin/python examples/flu-sir/train.py --smoke
+#
+# The simulator, data loader, prior-predictive check, and tests need only NumPy/pandas and
+# run on any Python. train.py / run_validation.py / reliability.py / posterior_predictive.py
+# / forecast.py additionally need a backend. Latent-state inference is pure BayesFlow SBI —
+# there is no separate sampler, so SciPy is not required.
+
+bayesflow>=2.0
+
+# Pick exactly ONE backend (uncomment one):
+jax
+# tensorflow
+# torch
+
+numpy>=1.24
+pandas>=2.0          # data_flu.py: load/align the CDC FluView CSVs
+matplotlib>=3.7      # optional, for figures
+arviz>=1.2           # posterior_predictive.py: standard PPC diagnostics
+
+# Real-data acquisition (optional; the raw pull is cached under data/):
+#   R with cdcfluview 0.9.4 (archived from CRAN — install from the CRAN Archive) + MMWRweek
+#   R> d <- cdcfluview::who_nrevss("state")
